@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\CreditUse;
 use App\Models\User;
 use App\Models\Country;
 use App\Models\Company;
@@ -399,6 +400,10 @@ class CustomerController extends Controller
 
         $sortOrder = strtolower($sortOrder) === 'desc' ? 'desc' : 'asc';
         $sortBy = $sortBy ?: 'crm_id';
+        $creditOutstandingSql = CreditUse::tableReady()
+            ? "(SELECT COALESCE(SUM(credit_uses.amount),0) FROM credit_uses WHERE credit_uses.user_id = users.id AND credit_uses.status = 'reserved')"
+            : '0';
+        $creditAvailableSql = "CASE WHEN users.credit_status IN (1, '1', 'active') THEN GREATEST(0, COALESCE(users.credit_limit,0) - {$creditOutstandingSql}) ELSE 0 END";
 
         $sortMap = [
             'sr_no' => ['column' => 'users.id', 'joins' => [], 'empty_last' => false],
@@ -431,6 +436,8 @@ class CustomerController extends Controller
             'credit_status' => ['column' => 'users.credit_status', 'joins' => [], 'empty_last' => false],
             'credit_days' => ['column' => 'users.credit_days', 'joins' => [], 'empty_last' => false],
             'credit_limit' => ['column' => 'users.credit_limit', 'joins' => [], 'empty_last' => false],
+            'credit_outstanding' => ['column' => DB::raw($creditOutstandingSql), 'joins' => [], 'empty_last' => false],
+            'credit_available' => ['column' => DB::raw($creditAvailableSql), 'joins' => [], 'empty_last' => false],
             'transport' => ['column' => 'sort_details.transport', 'joins' => ['details'], 'empty_last' => true],
             'booked_to' => ['column' => 'sort_details.booked_to', 'joins' => ['details'], 'empty_last' => true],
             'salesman' => ['column' => 'sort_details.salesman', 'joins' => ['details'], 'empty_last' => true],
@@ -509,6 +516,7 @@ class CustomerController extends Controller
         $countryNames = $countryIds->isNotEmpty()
             ? Country::whereIn('id', $countryIds)->pluck('name', 'id')
             : collect();
+        $creditOutstanding = CreditUse::outstandingByUser($users->pluck('id'));
 
         return view('backend.customer.customers.businessindex', compact(
             'users',
@@ -546,7 +554,8 @@ class CustomerController extends Controller
             'hasPersonalLocationFilters',
             'stateNames',
             'cityNames',
-            'countryNames'
+            'countryNames',
+            'creditOutstanding'
         ));
     }
 
@@ -1837,6 +1846,11 @@ class CustomerController extends Controller
             'credit_limit'  => 'required|numeric|min:0',
             'credit_days'   => 'required|integer|min:0',
         ]);
+        $validator->after(function ($validator) use ($request) {
+            if ($request->input('credit_status') === 'active' && (int) $request->input('credit_days') < 1) {
+                $validator->errors()->add('credit_days', translate('Number of days must be at least 1 when credit is active.'));
+            }
+        });
 
         if ($validator->fails()) {
             return back()
@@ -1858,6 +1872,7 @@ class CustomerController extends Controller
                 'credit_limit'  => (int) round((float) $validated['credit_limit']),
                 'credit_days'   => (int) $validated['credit_days'],
             ]);
+            CreditUse::rememberAvailable($user->fresh());
 
             DB::commit();
 

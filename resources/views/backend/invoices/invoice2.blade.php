@@ -299,11 +299,9 @@
     if ($invoiceTime === '') {
         $invoiceTime = '—';
     }
-    $creditDays = (int) ($user?->credit_days ?? 0);
-    $dueDate = '—';
-    if ($invoiceDateObj && $creditDays > 0) {
-        $dueDate = $invoiceDateObj->copy()->addDays($creditDays)->format('d-m-Y');
-    }
+    $orderCredit = \App\Models\CreditUse::recordedForOrder((int) $order->id);
+    $creditDays = $orderCredit ? (int) $orderCredit->credit_days : 0;
+    $dueDate = $orderCredit ? $orderCredit->dueLabel() : '—';
 
     $bookedName = optional($order->bookedTo)->name ?: ($userDetails?->booked_to ?: null);
     $transport = optional($order->transport)->name
@@ -1027,7 +1025,7 @@
                     <tr><td class="label">{{ translate('P.O. No. & Date') }}</td><td>{{ $dash($poText) }}</td></tr>
                     <tr><td class="label">{{ translate('Sales Executive Name & Code') }}</td><td>{{ $dash($salesExecutiveText) }}</td></tr>
                     <tr><td class="label">{{ translate('Payment Terms / Status') }}</td><td>{{ $dash(implode(' / ', array_filter([$paymentMethod ? translate($paymentMethod) : null, $paymentStatus ? translate($paymentStatus) : null]))) }}</td></tr>
-                    @if(!$useExportIds)
+                    @if(!$useExportIds && $orderCredit)
                         <tr><td class="label">{{ translate('Credit Days') }}</td><td>{{ $creditDays }}</td></tr>
                         <tr><td class="label">{{ translate('Due Date') }}</td><td>{{ $dueDate }}</td></tr>
                     @endif

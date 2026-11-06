@@ -43,7 +43,7 @@ class PayhereController extends Controller
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail($request->session()->get('combined_order_id'));
                 $combined_order_id = $combined_order->id;
-                $amount = $combined_order->grand_total;
+                $amount = \App\Models\CreditUse::amountDueNow($combined_order);
                 $first_name = json_decode($combined_order->shipping_address)->name;
                 $phone = json_decode($combined_order->shipping_address)->phone;
                 $email = json_decode($combined_order->shipping_address)->email;
@@ -54,7 +54,7 @@ class PayhereController extends Controller
             elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
                 $order_id = $order->id;
-                $amount = $order->grand_total;
+                $amount = \App\Models\CreditUse::amountDueNow($order);
                 $first_name = json_decode($order->shipping_address)->name;
                 $phone = json_decode($order->shipping_address)->phone;
                 $email = json_decode($order->shipping_address)->email;

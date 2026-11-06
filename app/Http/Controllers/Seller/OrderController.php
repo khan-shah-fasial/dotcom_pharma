@@ -79,9 +79,19 @@ class OrderController extends Controller
         $order->delivery_status = $request->status;
         $order->save();
 
+        $creditOnOrder = \App\Models\CreditUse::tableReady()
+            ? (float) \App\Models\CreditUse::where('order_id', $order->id)->where('status', \App\Models\CreditUse::STATUS_RESERVED)->sum('amount')
+            : 0;
+
+        if ($request->status == 'cancelled') {
+            \App\Models\CreditUse::releaseForOrder($order);
+        } else {
+            \App\Models\CreditUse::startOnDispatch($order);
+        }
+
         if ($request->status == 'cancelled' && $order->payment_type == 'wallet') {
             $user = User::where('id', $order->user_id)->first();
-            $user->balance += $order->grand_total;
+            $user->balance += max(0, (float) $order->grand_total - $creditOnOrder);
             $user->save();
         }
 

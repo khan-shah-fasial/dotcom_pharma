@@ -176,6 +176,8 @@ class PurchaseHistoryController extends Controller
                 product_restock($orderDetail);
             }
 
+            \App\Models\CreditUse::releaseForOrder($order);
+
             // Order paid notification to Customer, Seller, & Admin
             EmailUtility::order_email($order, 'cancelled'); 
 

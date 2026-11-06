@@ -42,10 +42,10 @@ class PaypalController extends Controller
             
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $amount = $combined_order->grand_total;
+                $amount = \App\Models\CreditUse::amountDueNow($combined_order);
             } elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
-                $amount = $order->grand_total;
+                $amount = \App\Models\CreditUse::amountDueNow($order);
             } elseif ($paymentType == 'wallet_payment') {
                 $amount = $paymentData['amount'];
             } elseif ($paymentType == 'customer_package_payment') {

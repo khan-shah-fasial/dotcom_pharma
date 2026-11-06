@@ -15,7 +15,7 @@
                 <!--amount need to be in paisa-->
                 <script src="https://checkout.razorpay.com/v1/checkout.js"
                         data-key="{{ env('RAZOR_KEY') }}"
-                        data-amount={{round($combined_order->grand_total) * 100}}
+                        data-amount={{round(\App\Models\CreditUse::amountDueNow($combined_order)) * 100}}
                         data-order_id="{{ $res->id }}"
                         data-callback_url="{{ route('api.razorpay.success') }}"
                         data-buttontext=""

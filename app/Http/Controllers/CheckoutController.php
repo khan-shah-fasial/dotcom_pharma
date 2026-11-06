@@ -11,6 +11,7 @@ use App\Models\CouponUsage;
 use App\Models\Address;
 use App\Models\Carrier;
 use App\Models\CombinedOrder;
+use App\Models\CreditUse;
 use App\Models\Country;
 use App\Models\Product;
 use App\Models\User;
@@ -192,7 +193,10 @@ class CheckoutController extends Controller
                 ->values()
                 ->all();
 
-            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info', 'referral_discount_preview', 'freeShippingOwnerIds'));
+            $creditPurchaseBlocked = auth()->check() && CreditUse::blocksPurchase(Auth::user());
+            $creditPurchaseMessage = $creditPurchaseBlocked ? CreditUse::purchaseBlockMessage() : '';
+
+            return view('frontend.checkout', compact('carts', 'address_id', 'billing_address_id', 'total', 'carrier_list', 'shipping_info', 'referral_discount_preview', 'freeShippingOwnerIds', 'creditPurchaseBlocked', 'creditPurchaseMessage'));
         }
         flash(translate('Please Select cart items to Proceed'))->error();
         return back();
@@ -215,11 +219,21 @@ class CheckoutController extends Controller
             }
         }
 
+        $user = auth()->user();
+        if ($user && CreditUse::blocksPurchase($user)) {
+            flash(CreditUse::purchaseBlockMessage())->warning();
+            return redirect()->route('checkout');
+        }
+        $useCredit = $request->boolean('use_credit');
+        if ($useCredit && (!$user || !CreditUse::customerCanUse($user))) {
+            flash(translate('Credit is not available for this order.'))->warning();
+            return redirect()->route('checkout');
+        }
+
         if ($request->payment_option == null) {
             flash(translate('There is no payment option is selected.'))->warning();
             return redirect()->route('checkout');
         }
-        $user = auth()->user();
         $carts = Cart::where('user_id', $user->id)->active()->get();
 
 
@@ -244,6 +258,14 @@ class CheckoutController extends Controller
             $message = collect($exception->errors())->flatten()->first() ?: translate('Unable to place this order.');
             flash($message)->warning();
             return redirect()->route('cart');
+        }
+
+        $creditApplied = 0.0;
+        if ($useCredit) {
+            $creditApplied = CreditUse::reserveForCombined($user, $combinedOrder);
+            if ($creditApplied <= 0) {
+                flash(translate('Credit could not be applied. The order total is due now.'))->warning();
+            }
         }
         // $file = base_path("/public/assets/myText.txt");
         // $dev_mail = get_dev_mail();
@@ -275,6 +297,10 @@ class CheckoutController extends Controller
         $data['combined_order_id'] = $request->session()->get('combined_order_id');
         $data['payment_method'] = $request->payment_option;
         $request->session()->put('payment_data', $data);
+        if ($creditApplied > 0 && CreditUse::amountDueNow($combinedOrder->fresh()) <= 0.009) {
+            flash(translate('Your order has been placed on credit.'))->success();
+            return redirect()->route('order_confirmed');
+        }
         if ($request->session()->get('combined_order_id') != null) {
             // If block for Online payment, wallet and cash on delivery. Else block for Offline payment
             $decorator = __NAMESPACE__ . '\\Payment\\' . str_replace(' ', '', ucwords(str_replace('_', ' ', $request->payment_option))) . "Controller";
@@ -285,7 +311,7 @@ class CheckoutController extends Controller
                 $combined_order = CombinedOrder::findOrFail($request->session()->get('combined_order_id'));
                 $manual_payment_data = array(
                     'name'   => $request->payment_option,
-                    'amount' => $combined_order->grand_total,
+                    'amount' => CreditUse::amountDueNow($combined_order),
                     'trx_id' => $request->trx_id,
                     'photo'  => $request->photo
                 );
@@ -962,7 +988,7 @@ class CheckoutController extends Controller
             else {
                 $manual_payment_data = array(
                     'name'   => $request->payment_option,
-                    'amount' => $order->grand_total,
+                    'amount' => CreditUse::amountDueNow($order),
                     'trx_id' => $request->trx_id,
                     'photo'  => $request->photo
                 );

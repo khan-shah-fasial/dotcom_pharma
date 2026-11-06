@@ -56,12 +56,12 @@ class NagadController
 
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $this->amount($combined_order->grand_total);
+                $this->amount(\App\Models\CreditUse::amountDueNow($combined_order));
                 $this->tnx($combined_order->id);
             }
             elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
-                $this->amount($order->grand_total);
+                $this->amount(\App\Models\CreditUse::amountDueNow($order));
                 $this->tnx(rand(000000, 999999));
             }
             elseif ($paymentType == 'wallet_payment') {

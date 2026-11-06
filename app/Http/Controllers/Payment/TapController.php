@@ -28,10 +28,10 @@ class TapController extends Controller
             $paymentData = Session::get('payment_data');
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $amount = round($combined_order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($combined_order));
             } elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
-                $amount = round($order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($order));
             } elseif ($paymentType == 'wallet_payment') {
                 $amount = round(Session::get('payment_data')['amount']);
             } elseif ($paymentType == 'customer_package_payment') {

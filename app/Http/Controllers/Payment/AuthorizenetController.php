@@ -55,14 +55,14 @@ class AuthorizenetController extends Controller
             $invoiceNumber = time() . $database_order->id;
             $lastName = json_decode($first_order->shipping_address)->name;
             $address = json_decode($first_order->shipping_address)->address;
-            $amount = $database_order->orders->sum('grand_total');
+            $amount = \App\Models\CreditUse::amountDueNow($database_order);
             $city = json_decode($first_order->shipping_address)->city;
             $zip = json_decode($first_order->shipping_address)->postal_code;
             $country = json_decode($first_order->shipping_address)->country;
         }
         elseif ($paymentType == 'order_re_payment') {
             $order = Order::findOrFail($paymentData['order_id']);
-            $amount = $order->grand_total;
+            $amount = \App\Models\CreditUse::amountDueNow($order);
             $lastName = $user->name;
             $invoiceNumber = time() . $order->id;
         }

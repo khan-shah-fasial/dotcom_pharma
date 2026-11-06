@@ -7,6 +7,7 @@ use App\Models\BookedTo;
 use App\Models\Cart;
 use App\Models\CombinedOrder;
 use App\Models\Coupon;
+use App\Models\CreditUse;
 use App\Models\CouponUsage;
 use App\Models\LocalDeliveryPartner;
 use App\Models\Order;
@@ -57,6 +58,14 @@ class OrderPlacementService
     public function placeFromBackendRequest(Request $request, array $options = []): CombinedOrder
     {
         $customer = $this->resolveApprovedCustomer($request->input('customer_id'));
+        if (CreditUse::blocksPurchase($customer)) {
+            $this->fail('customer_id', CreditUse::purchaseBlockMessage());
+        }
+
+        $useCredit = (string) $request->input('payment_type') === 'credit';
+        if ($useCredit && !CreditUse::customerCanUse($customer)) {
+            $this->fail('payment_type', translate('Credit is not available for this order.'));
+        }
 
         if ($request->has('shipping_same_as_billing')) {
             $billingAddress = $this->resolveBackendAddress($customer, $request, Address::TYPE_BILLING, true);
@@ -81,7 +90,9 @@ class OrderPlacementService
             );
         }
 
-        $paymentStatus = $request->input('payment_status') === 'paid' ? 'paid' : 'unpaid';
+        $paymentStatus = $useCredit
+            ? 'unpaid'
+            : ($request->input('payment_status') === 'paid' ? 'paid' : 'unpaid');
         $sendNotification = $request->has('send_order_notification')
             ? $request->boolean('send_order_notification')
             : true;
@@ -92,6 +103,7 @@ class OrderPlacementService
             'billing_address_model' => $billingAddress,
             'payment_type' => $request->input('payment_type', 'manual'),
             'payment_status' => $paymentStatus,
+            'use_credit' => $useCredit,
             'send_notification' => $sendNotification,
             'document_type' => $request->input('document_type'),
             'document_type_custom' => $request->input('document_type_custom'),
@@ -226,6 +238,13 @@ class OrderPlacementService
 
                 $combinedOrder->grand_total += $order->grand_total;
                 $combinedOrder->save();
+            }
+
+            if (!empty($options['use_credit'])) {
+                $applied = CreditUse::reserveForCombined($customer, $combinedOrder->fresh('orders'));
+                if ($applied <= 0) {
+                    $this->fail('payment_type', translate('Credit could not be applied. The order total is due now.'));
+                }
             }
 
             return $combinedOrder->fresh('orders.orderDetails');

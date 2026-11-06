@@ -31,6 +31,9 @@
         <div class="container">
             <div class="row cols-xs-space cols-sm-space cols-md-space">
                 <div class="col-lg-8 mx-auto">
+                    @if (!empty($creditPurchaseBlocked))
+                        <div class="alert alert-warning">{{ $creditPurchaseMessage }}</div>
+                    @endif
                     <form class="form-default" data-toggle="validator" action="{{ route('payment.checkout') }}" role="form" method="POST" id="checkout-form">
                         @csrf
 
@@ -227,7 +230,8 @@
                         <div class="col-6 text-right">
                             <button type="button" onclick="submitOrder(this)" id="submitOrderBtn"
                                 class="btn btn-primary fs-14 fw-700 rounded-0 px-4"
-                                style="background: #2b56a1 !important;">{{ translate('Complete Order') }}</button>
+                                style="background: #2b56a1 !important;"
+                                @if (!empty($creditPurchaseBlocked)) disabled @endif>{{ translate('Complete Order') }}</button>
                         </div>
                     </div>
                 </div>

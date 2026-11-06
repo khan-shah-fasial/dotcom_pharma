@@ -30,7 +30,7 @@ class MercadopagoController extends Controller
 
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $amount = round($combined_order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($combined_order));
                 $combined_order_id = $combined_order->id;
                 $billname = 'Ecommerce Cart Payment';
                 $first_name = json_decode($combined_order->shipping_address)->name;
@@ -38,7 +38,7 @@ class MercadopagoController extends Controller
                 $email = json_decode($combined_order->shipping_address)->email;
             } elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
-                $amount = round($order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($order));
                 $combined_order_id = $order->combined_order_id;
                 $billname = 'Order Re Payment';
                 $first_name = json_decode($order->shipping_address)->name;

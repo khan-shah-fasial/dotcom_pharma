@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
     
     Schema::defaultStringLength(191);
     Paginator::useBootstrap();
+
+    if (class_exists(\Barryvdh\Debugbar\Facades\Debugbar::class)) {
+        \Barryvdh\Debugbar\Facades\Debugbar::disable();
+    }
     
     if (app()->environment('production')) {
         URL::forceScheme('https');

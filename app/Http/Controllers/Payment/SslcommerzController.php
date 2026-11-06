@@ -37,7 +37,7 @@ class SslcommerzController extends Controller
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail($request->session()->get('combined_order_id'));
                 $post_data = array();
-                $post_data['total_amount'] = $combined_order->grand_total; # You cant not pay less than 10
+                $post_data['total_amount'] = \App\Models\CreditUse::amountDueNow($combined_order); # You cant not pay less than 10
                 $post_data['tran_id'] = substr(md5($request->session()->get('combined_order_id')), 0, 10); // tran_id must be unique
                 $post_data['value_a'] = $post_data['tran_id'];
                 $post_data['value_b'] = $request->session()->get('combined_order_id');
@@ -155,6 +155,7 @@ class SslcommerzController extends Controller
     {
         $request->session()->forget('order_id');
         $request->session()->forget('payment_data');
+        \App\Models\CreditUse::releaseUnpaidPortalHold();
         flash(translate('Payment Failed'))->warning();
         return redirect()->route('home');
     }
@@ -163,6 +164,7 @@ class SslcommerzController extends Controller
     {
         $request->session()->forget('order_id');
         $request->session()->forget('payment_data');
+        \App\Models\CreditUse::releaseUnpaidPortalHold();
         flash(translate('Payment cancelled'))->error();
         return redirect()->route('home');
     }
@@ -180,7 +182,7 @@ class SslcommerzController extends Controller
 
             if ($order->payment_status == 'Pending') {
                 $sslc = new SSLCommerz();
-                $validation = $sslc->orderValidate($tran_id, $order->grand_total, 'BDT', $request->all());
+                $validation = $sslc->orderValidate($tran_id, \App\Models\CreditUse::amountDueNow($order), 'BDT', $request->all());
                 if ($validation == TRUE) {
                     /*
                         That means IPN worked. Here you need to update order status

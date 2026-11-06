@@ -895,6 +895,11 @@
                                     <span class="aiz-side-nav-text">{{ translate('Add Account') }}</span>
                                 </a>
                             </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('credits.index') }}" class="aiz-side-nav-link {{ areActiveRoutes(['credits.index']) }}">
+                                    <span class="aiz-side-nav-text">{{ translate('Credit') }}</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 @endcan

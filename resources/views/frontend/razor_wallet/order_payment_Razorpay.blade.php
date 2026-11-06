@@ -9,7 +9,7 @@
 <script>
     var options = {
         "key": "{{ env('RAZOR_KEY') }}", // Enter the Key ID generated from the Dashboard
-        "amount": "{{round($combined_order->grand_total) * 100}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+        "amount": "{{round(\App\Models\CreditUse::amountDueNow($combined_order)) * 100}}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
         "currency": "INR",
         "name": "{{ env('APP_NAME') }}", //your business name
         "description": "{{ Session::get('payment_type') }}",

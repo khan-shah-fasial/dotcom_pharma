@@ -411,6 +411,8 @@
                             ['credit_status', 'Credit Status'],
                             ['credit_days', 'Number of Days'],
                             ['credit_limit', 'Credit Limit'],
+                            ['credit_available', 'Available Credit'],
+                            ['credit_outstanding', 'Outstanding Credit'],
                         ],
                         [
                             ['transport', 'Transport'],
@@ -577,9 +579,17 @@
                                             <div>{{ $details->current_status ?? '-' }}</div>
                                         </td>
                                         <td>
+                                            @php
+                                                $outstandingCredit = (float) ($creditOutstanding[$user->id] ?? 0);
+                                                $availableCredit = $user->creditIsActive()
+                                                    ? max(0, (float) $user->credit_limit - $outstandingCredit)
+                                                    : 0;
+                                            @endphp
                                             <div>{{ $user->creditIsActive() ? translate('Active') : translate('Deactive') }}</div>
                                             <div>{{ ($user->credit_days === null || $user->credit_days === '') ? '-' : (int) $user->credit_days }}</div>
                                             <div>{{ ($user->credit_limit === null || $user->credit_limit === '') ? '-' : single_price($user->credit_limit) }}</div>
+                                            <div>{{ single_price($availableCredit) }}</div>
+                                            <div>{{ single_price($outstandingCredit) }}</div>
                                         </td>
                                         <td>
                                             <div>{{ $details->transport ?? '-' }}</div>

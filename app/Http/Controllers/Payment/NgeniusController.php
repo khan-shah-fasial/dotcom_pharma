@@ -17,12 +17,12 @@ class NgeniusController extends Controller
         $paymentData = Session::get('payment_data');
         if ($paymentType == 'cart_payment') {
             $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-            $amount = round($combined_order->grand_total * 100);
+            $amount = round(\App\Models\CreditUse::amountDueNow($combined_order) * 100);
             //will be redirected
             NgeniusUtility::make_payment(route('ngenius.cart_payment_callback'), "cart_payment", $amount);
         } elseif ($paymentType == 'order_re_payment') {
             $order = Order::findOrFail($paymentData['order_id']);
-            $amount = round($order->grand_total * 100);
+            $amount = round(\App\Models\CreditUse::amountDueNow($order) * 100);
             //will be redirected
             NgeniusUtility::make_payment(route('ngenius.order_re_payment_callback'), "order_re_payment", $amount);
         } elseif ($paymentType == 'wallet_payment') {

@@ -22,6 +22,14 @@
                         <div class="field-label">{{ translate('Credit Limit') }}</div>
                         <div class="field-value">{{ ($user2->credit_limit === null || $user2->credit_limit === '') ? '-' : single_price($user2->credit_limit) }}</div>
                     </div>
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <div class="field-label">{{ translate('Available Credit') }}</div>
+                        <div class="field-value">{{ single_price(\App\Models\CreditUse::availableFor($user2)) }}</div>
+                    </div>
+                    <div class="col-md-4 col-sm-6 col-12">
+                        <div class="field-label">{{ translate('Outstanding Credit') }}</div>
+                        <div class="field-value">{{ single_price(\App\Models\CreditUse::outstandingFor($user2)) }}</div>
+                    </div>
                 </div>
             </div>
         </div>

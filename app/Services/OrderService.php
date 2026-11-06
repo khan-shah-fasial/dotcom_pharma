@@ -20,10 +20,18 @@ class OrderService{
         $order->delivery_status = $request->status;
         $order->save();
 
-        if ($request->status == 'cancelled' && $order->payment_type == 'wallet') {
-            $user = User::where('id', $order->user_id)->first();
-            $user->balance += $order->grand_total;
-            $user->save();
+        if ($request->status == 'cancelled') {
+            $creditOnOrder = \App\Models\CreditUse::tableReady()
+                ? (float) \App\Models\CreditUse::where('order_id', $order->id)->where('status', \App\Models\CreditUse::STATUS_RESERVED)->sum('amount')
+                : 0;
+            \App\Models\CreditUse::releaseForOrder($order);
+            if ($order->payment_type == 'wallet') {
+                $user = User::where('id', $order->user_id)->first();
+                $user->balance += max(0, (float) $order->grand_total - $creditOnOrder);
+                $user->save();
+            }
+        } else {
+            \App\Models\CreditUse::startOnDispatch($order);
         }
 
         foreach ($order->orderDetails as $key => $orderDetail) {

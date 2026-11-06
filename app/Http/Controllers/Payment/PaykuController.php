@@ -33,7 +33,7 @@ class PaykuController
                 $data = [
                     'order' => $orderCode,
                     'subject' => 'Cart Payment',
-                    'amount' => $combined_order->grand_total,
+                    'amount' => \App\Models\CreditUse::amountDueNow($combined_order),
                     'email' => $email
                 ];
             } elseif ($paymentType == 'order_re_payment') {
@@ -41,7 +41,7 @@ class PaykuController
                 $data = [
                     'order' => $orderCode,
                     'subject' => 'Order Re Payment',
-                    'amount' => $order->grand_total,
+                    'amount' => \App\Models\CreditUse::amountDueNow($order),
                     'email' => $email
                 ];
             } elseif ($paymentType == 'wallet_payment') {

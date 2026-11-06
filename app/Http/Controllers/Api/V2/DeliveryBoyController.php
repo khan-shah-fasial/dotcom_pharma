@@ -292,6 +292,12 @@ class DeliveryBoyController extends Controller
         $order->delivery_status = $request->status;
         $order->save();
 
+        if ($request->status == 'cancelled') {
+            \App\Models\CreditUse::releaseForOrder($order);
+        } else {
+            \App\Models\CreditUse::startOnDispatch($order);
+        }
+
         $delivery_history = new DeliveryHistory;
 
         $delivery_history->order_id         = $order->id;

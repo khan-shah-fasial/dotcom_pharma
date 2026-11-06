@@ -37,10 +37,10 @@ class StripeController extends Controller
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
                 $client_reference_id = $combined_order->id;
-                $amount = round($combined_order->grand_total * 100);
+                $amount = round(\App\Models\CreditUse::amountDueNow($combined_order) * 100);
             } elseif ($paymentType == 'order_re_payment') {
                 $order = Order::findOrFail($paymentData['order_id']);
-                $amount = round($order->grand_total * 100);
+                $amount = round(\App\Models\CreditUse::amountDueNow($order) * 100);
                 $client_reference_id = auth()->id();
             } elseif ($paymentType == 'wallet_payment') {
                 $amount = round($request->session()->get('payment_data')['amount'] * 100);
@@ -138,10 +138,12 @@ class StripeController extends Controller
                     return (new SellerPackageController)->purchase_payment_done($paymentData, json_encode($payment));
                 }
             } else {
+                \App\Models\CreditUse::releaseUnpaidPortalHold();
                 flash(translate('Payment failed'))->error();
                 return redirect()->route('home');
             }
         } catch (\Exception $e) {
+            \App\Models\CreditUse::releaseUnpaidPortalHold();
             flash(translate('Payment failed'))->error();
             return redirect()->route('home');
         }
@@ -149,6 +151,7 @@ class StripeController extends Controller
 
     public function cancel(Request $request)
     {
+        \App\Models\CreditUse::releaseUnpaidPortalHold();
         flash(translate('Payment is cancelled'))->error();
         return redirect()->route('home');
     }

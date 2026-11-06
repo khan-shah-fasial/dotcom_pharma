@@ -29,7 +29,7 @@ class RazorpayController extends Controller
             if ($paymentType == 'cart_payment') {
 
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $res = $api->order->create(array('receipt' => '123', 'amount' => round($combined_order->grand_total) * 100, 'currency' => 'INR', 'notes' => array('key1' => 'value3', 'key2' => 'value2')));
+                $res = $api->order->create(array('receipt' => '123', 'amount' => round(\App\Models\CreditUse::amountDueNow($combined_order)) * 100, 'currency' => 'INR', 'notes' => array('key1' => 'value3', 'key2' => 'value2')));
 
                 return view('frontend.razor_wallet.order_payment_Razorpay', compact('combined_order', 'res'));
             } elseif ($paymentType == 'order_re_payment') {
@@ -90,6 +90,7 @@ class RazorpayController extends Controller
                     $response = $api->payment->fetch($input['razorpay_payment_id'])->capture(array('amount' => $payment['amount']));
                     
                 } catch (\Exception $e) {
+                    \App\Models\CreditUse::releaseUnpaidPortalHold();
                     return  $e->getMessage();
                     \Session::put('error', $e->getMessage());
                     return redirect()->route('home');

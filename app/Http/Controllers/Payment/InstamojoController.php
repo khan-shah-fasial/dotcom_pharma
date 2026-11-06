@@ -40,7 +40,7 @@ class InstamojoController extends Controller
                     try {
                         $response = $api->paymentRequestCreate(array(
                             "purpose" => ucfirst(str_replace('_', ' ', $paymentType)),
-                            "amount" => round($combined_order->grand_total),
+                            "amount" => round(\App\Models\CreditUse::amountDueNow($combined_order)),
                             "send_email" => false,
                             "email" => $user->email,
                             "phone" => $user->phone,
@@ -62,7 +62,7 @@ class InstamojoController extends Controller
                     try {
                         $response = $api->paymentRequestCreate(array(
                             "purpose" => ucfirst(str_replace('_', ' ', $paymentType)),
-                            "amount" => round($order->grand_total),
+                            "amount" => round(\App\Models\CreditUse::amountDueNow($order)),
                             "send_email" => false,
                             "email" => $user->email,
                             "phone" => $user->phone,

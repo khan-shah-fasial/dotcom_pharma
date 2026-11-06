@@ -83,7 +83,18 @@
                                     <label class="form-label">{{ translate('Credit Limit') }}</label>
                                     <p class="mb-0">{{ ($user2->credit_limit === null || $user2->credit_limit === '') ? '-' : single_price($user2->credit_limit) }}</p>
                                 </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ translate('Available Credit') }}</label>
+                                    <p class="mb-0">{{ single_price(\App\Models\CreditUse::availableFor($user2)) }}</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">{{ translate('Outstanding Credit') }}</label>
+                                    <p class="mb-0">{{ single_price(\App\Models\CreditUse::outstandingFor($user2)) }}</p>
+                                </div>
                             </div>
+                            @if (\App\Models\CreditUse::blocksPurchase($user2))
+                                <div class="alert alert-warning py-2">{{ \App\Models\CreditUse::purchaseBlockMessage() }}</div>
+                            @endif
                             @if (!$user2->creditIsActive())
                                 <div class="alert alert-warning py-2 mb-0">{{ translate('Credit not active.') }}</div>
                             @endif

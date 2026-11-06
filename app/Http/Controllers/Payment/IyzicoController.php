@@ -44,7 +44,7 @@ class IyzicoController extends Controller
 
         if($paymentType == 'cart_payment'){
             $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-            $amount = $combined_order->grand_total;
+            $amount = \App\Models\CreditUse::amountDueNow($combined_order);
             $data['combined_order_id'] = Session::get('combined_order_id');
             $firstBasketItemName = "Cart Payment";
             $firstBasketItemCategory1 = "Accessories";
@@ -52,7 +52,7 @@ class IyzicoController extends Controller
         if ($paymentType == 'order_re_payment') {
             $data['order_id'] = $paymentData['order_id'];
             $order = Order::findOrFail($paymentData['order_id']);
-            $amount = $order->grand_total;
+            $amount = \App\Models\CreditUse::amountDueNow($order);
             $firstBasketItemName = "Order Re Payment";
             $firstBasketItemCategory1 = "Accessories";
         }

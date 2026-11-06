@@ -2153,7 +2153,8 @@ span#picker-info-stock-badge {
                     ['{{ translate('Approval Status') }}', customer.approval_status],
                     ['{{ translate('Current Status') }}', customer.current_status],
                     ['{{ translate('Customer Role') }}', customer.role],
-                    ['{{ translate('Credit / Balance Amount') }}', customer.credit_balance_amount],
+                    ['{{ translate('Available Credit') }}', customer.credit_balance_amount],
+                    ['{{ translate('Outstanding Credit') }}', customer.credit_outstanding_amount],
                     ['{{ translate('Credit Days') }}', customer.credit_days],
                     ['{{ translate('Credit Limit') }}', customer.credit_limit]
                 ];

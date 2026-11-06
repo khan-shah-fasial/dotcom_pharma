@@ -46,6 +46,14 @@ class OrderController extends Controller
 
         $user = User::find(auth()->user()->id);
 
+        if (\App\Models\CreditUse::blocksPurchase($user)) {
+            return response()->json([
+                'combined_order_id' => 0,
+                'result' => false,
+                'message' => \App\Models\CreditUse::purchaseBlockMessage(),
+            ]);
+        }
+
         $address = Address::where('id', $cartItems->first()->address_id)->first();
         $shippingAddress = [];
         if ($address != null) {
@@ -421,6 +429,8 @@ class OrderController extends Controller
                 $orderDetail->save();
                 product_restock($orderDetail);
             }
+
+            \App\Models\CreditUse::releaseForOrder($order);
 
             return $this->success(translate('Order has been canceled successfully'));
         } else {

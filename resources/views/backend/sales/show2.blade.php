@@ -22,6 +22,7 @@
         $dischargeLocation = $order->discharge_location_type === 'air'
             ? $order->dischargeAirport
             : $order->dischargeSeaPort;
+        $orderCredit = \App\Models\CreditUse::recordedForOrder((int) $order->id);
     @endphp
 
     <style>
@@ -139,6 +140,11 @@
                             <tr><th>{{ translate('Order Status') }}</th><td><span class="status-chip">{{ $formatEnum($deliveryStatus) }}</span></td></tr>
                             <tr><th>{{ translate('Payment Terms') }}</th><td>{{ $formatEnum($order->payment_type) }}</td></tr>
                             <tr><th>{{ translate('Payment Status') }}</th><td>{{ $formatEnum($paymentStatus) }}</td></tr>
+                            @if ($orderCredit)
+                                <tr><th>{{ translate('Credit') }}</th><td>{{ single_price($orderCredit->amount) }}</td></tr>
+                                <tr><th>{{ translate('Credit Days') }}</th><td>{{ (int) $orderCredit->credit_days }}</td></tr>
+                                <tr><th>{{ translate('Credit due') }}</th><td>{{ $orderCredit->dueLabel() }}</td></tr>
+                            @endif
                             <tr><th>{{ translate('Additional Info') }}</th><td class="address-block">{{ $displayValue($order->additional_info) }}</td></tr>
                         </tbody>
                     </table>

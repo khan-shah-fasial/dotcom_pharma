@@ -33,10 +33,10 @@ class BkashController extends Controller
             $paymentData = Session::get('payment_data');
             if ($paymentType == 'cart_payment') {
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                $amount = round($combined_order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($combined_order));
             } elseif ($paymentType == 'order_re_payment') {
                 $combined_order = CombinedOrder::findOrFail($paymentData['order_id']);
-                $amount = round($combined_order->grand_total);
+                $amount = round(\App\Models\CreditUse::amountDueNow($combined_order));
             } elseif ($paymentType == 'wallet_payment') {
                 $amount = round($paymentData['amount']);
             } elseif ($paymentType == 'customer_package_payment') {

@@ -5,6 +5,20 @@
     <textarea name="additional_info" rows="5" class="form-control rounded-0"
         placeholder="{{ translate('Type your text...') }}"></textarea>
 </div>
+@if (Auth::check() && \App\Models\CreditUse::customerCanUse(Auth::user()))
+    @php
+        $availableCredit = \App\Models\CreditUse::availableFor(Auth::user());
+    @endphp
+    <div class="border rounded p-3 mb-4">
+        <label class="aiz-checkbox mb-0">
+            <input type="checkbox" name="use_credit" value="1">
+            <span class="aiz-square-check"></span>
+            <span class="fw-700">{{ translate('Use credit') }}</span>
+        </label>
+        <div class="fs-13 mt-2">{{ translate('Available Credit') }}: <strong>{{ single_price($availableCredit) }}</strong></div>
+        <div class="fs-13">{{ translate('Credit is applied up to the available credit. Any amount above that is paid now.') }}</div>
+    </div>
+@endif
 <div>
     <h3 class="fs-16 fw-700 text-dark">
         {{ translate('Select a payment option') }}

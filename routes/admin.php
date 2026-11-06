@@ -24,6 +24,7 @@ use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\CustomAlertController;
+use App\Http\Controllers\CreditController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerPackageController;
 use App\Http\Controllers\CustomerProductController;
@@ -365,6 +366,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
 
         Route::post('/customers/credit/update','update_credit')->name('customers.credits.update');
     });
+
+    Route::get('/credits', [CreditController::class, 'index'])->name('credits.index');
+    Route::post('/credits/{creditUse}/paid', [CreditController::class, 'markPaid'])->name('credits.mark_paid');
 
     // Company Master
     Route::get('companies/location-options', [CompanyController::class, 'locationOptions'])->name('companies.location.options');

@@ -35,7 +35,7 @@ class PaystackController extends Controller
             $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
             
             $request->email = $user->email;
-            $request->amount = round($combined_order->grand_total * 100);
+            $request->amount = round(\App\Models\CreditUse::amountDueNow($combined_order) * 100);
             $request->currency = $currency;
             $request->metadata = json_encode($array);
             $request->reference = Paystack::genTranxRef();
@@ -48,7 +48,7 @@ class PaystackController extends Controller
             $order = Order::findOrFail($paymentData['order_id']);
 
             $request->email = $user->email;
-            $request->amount = round($order->grand_total * 100);
+            $request->amount = round(\App\Models\CreditUse::amountDueNow($order) * 100);
             $request->currency = $currency;
             $request->metadata = json_encode($array);
             $request->reference = Paystack::genTranxRef();

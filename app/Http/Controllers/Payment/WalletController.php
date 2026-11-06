@@ -21,16 +21,16 @@ class WalletController extends Controller
 
             if($paymentType == 'cart_payment'){
                 $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-                if ($user->balance >= $combined_order->grand_total) {
-                    $user->balance -= $combined_order->grand_total;
+                if ($user->balance >= \App\Models\CreditUse::amountDueNow($combined_order)) {
+                    $user->balance -= \App\Models\CreditUse::amountDueNow($combined_order);
                     $user->save();
                     return (new CheckoutController)->checkout_done($combined_order->id, null);
                 }
             }
             elseif($paymentType == 'order_re_payment'){
                 $order = Order::findOrFail($paymentData['order_id']);
-                if ($user->balance >= $order->grand_total) {
-                    $user->balance -= $order->grand_total;
+                if ($user->balance >= \App\Models\CreditUse::amountDueNow($order)) {
+                    $user->balance -= \App\Models\CreditUse::amountDueNow($order);
                     $user->save();
                     return (new CheckoutController)->orderRePaymentDone($paymentData);
                 }

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Credit module QA report — 6 Nov 2026</title>
+<style>
+  :root { --ink:#1f2933; --muted:#52606d; --line:#e4e7eb; --bg:#f7f8fa; --pass:#137333; --fail:#b42318; --blocked:#b54708; --na:#52606d; --high:#b54708; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 Georgia, "Times New Roman", serif; color:var(--ink); background:var(--bg); }
+  header { background:#102a43; color:#fff; padding:28px 8vw 22px; }
+  header h1 { margin:0 0 6px; font-size:28px; }
+  header p { margin:0; color:#d9e2ec; }
+  main { padding:24px 8vw 48px; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:999px; font:600 13px/1.2 Arial, sans-serif; background:#fff3cd; color:#7a4f01; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin:18px 0; }
+  .card { background:#fff; border:1px solid var(--line); padding:14px; }
+  .card strong { display:block; font-size:22px; }
+  section { background:#fff; border:1px solid var(--line); padding:18px 18px 8px; margin:0 0 16px; }
+  h2 { margin:0 0 12px; font-size:20px; }
+  table { width:100%; border-collapse:collapse; font:14px/1.4 Arial, sans-serif; margin:0 0 16px; }
+  th, td { border:1px solid var(--line); padding:8px; text-align:left; vertical-align:top; }
+  th { background:#f0f4f8; }
+  tr:nth-child(even) td { background:#fafbfc; }
+  code { font-family:Consolas, monospace; font-size:12px; }
+  .pass { color:var(--pass); font-weight:700; }
+  .fail { color:var(--fail); font-weight:700; }
+  .blocked, .open { color:var(--blocked); font-weight:700; }
+  .na { color:var(--na); font-weight:700; }
+  footer { padding:12px 8vw 28px; color:var(--muted); font:13px Arial, sans-serif; }
+  @media print { body { background:#fff; } header { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Credit module test report</h1>
+  <p>Pharm Vet Easy / dotcom_pharma · 6 Nov 2026 · local http://127.0.0.1:8000 · MySQL database dotcom_pharma</p>
+  <p style="margin-top:10px"><span class="badge">More testing required · 78%</span></p>
+</header>
+<main>
+<section>
+  <h2>1. Project information</h2>
+  <p>Scope was the credit module already built (account, checkout use, and the dispatch clock added in this run). The site was started locally. MySQL was started for the check. No admin or customer password was available, so logged-in screens were not opened.</p>
+</section>
+<section>
+  <h2>2. Testing summary</h2>
+  <table>
+    <thead><tr><th>Testing type</th><th>Total</th><th>Passed</th><th>Failed</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Functional testing</td><td>7</td><td>3</td><td>1</td><td>3 blocked</td></tr>
+      <tr><td>Security testing</td><td>3</td><td>2</td><td>1</td><td>Local debug bar visible</td></tr>
+      <tr><td>UI/UX testing</td><td>2</td><td>1</td><td>0</td><td>1 not tested</td></tr>
+      <tr><td>Performance testing</td><td>1</td><td>0</td><td>0</td><td>Not tested</td></tr>
+      <tr><td>SEO testing</td><td>1</td><td>0</td><td>0</td><td>Not applicable</td></tr>
+      <tr><td>Content testing</td><td>1</td><td>1</td><td>0</td><td>Login labels only</td></tr>
+      <tr><td>Compatibility testing</td><td>1</td><td>0</td><td>0</td><td>Not tested</td></tr>
+      <tr><td>Database testing</td><td>2</td><td>1</td><td>1</td><td>Table missing</td></tr>
+      <tr><td>API testing</td><td>1</td><td>0</td><td>0</td><td>Not tested</td></tr>
+      <tr><td>Deployment testing</td><td>1</td><td>0</td><td>1</td><td>SQL not applied</td></tr>
+    </tbody>
+  </table>
+  <div class="cards">
+    <div class="card">Score<strong>78%</strong></div>
+    <div class="card">Critical<strong>0</strong></div>
+    <div class="card">High<strong>1</strong></div>
+    <div class="card">Open issues<strong>2</strong></div>
+  </div>
+  <p>Score uses only categories that were executed: functional 75% (weight 30), security 67% (weight 20), UI 100% of the one executed check (weight 15). Performance, SEO, and compatibility were excluded. Blocked rows are not counted as passes.</p>
+</section>
+<section>
+  <h2>3. Functional testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Module</th><th>Test case</th><th>Status</th><th>Priority</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>FT-001</td><td>Credit</td><td>Opening /admin/credits while logged out</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+      <tr><td>FT-002</td><td>Checkout</td><td>Opening /checkout while logged out</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+      <tr><td>FT-003</td><td>Credit</td><td>credit_uses table is present so a customer can use credit</td><td class="fail">Fail</td><td>High</td><td>Run <code>sqlupdates/credit_uses.sql</code> on the database. The table was not found.</td></tr>
+      <tr><td>FT-004</td><td>Credit</td><td>10 Apr 2026 plus 30 days is 10 May 2026</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+      <tr><td>FT-005</td><td>Credit</td><td>Assign credit and read available and outstanding on the customer list</td><td class="blocked">Blocked</td><td>High</td><td>Needs an admin login. Not attempted.</td></tr>
+      <tr><td>FT-006</td><td>Checkout</td><td>Use credit on an order and send only the remainder to the payment portal</td><td class="blocked">Blocked</td><td>Critical</td><td>Needs the credit table and a logged-in eligible customer.</td></tr>
+      <tr><td>FT-007</td><td>Credit</td><td>First dispatch stores the credit start and due date, and a later status does not move them</td><td class="blocked">Blocked</td><td>High</td><td>Needs the credit table. The date rule itself passed in FT-004.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>4. Bug / issue report</h2>
+  <table>
+    <thead><tr><th>Bug ID</th><th>Module</th><th>Issue</th><th>Severity</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>BUG-001</td><td>Credit</td><td>The credit_uses table is not in the database. Checkout will not offer credit, and a dispatch cannot store a due date.</td><td class="open">High</td><td class="open">Open</td><td><code>sqlupdates/credit_uses.sql</code> → run the CREATE TABLE statement on dotcom_pharma.</td></tr>
+      <tr><td>BUG-002</td><td>Local site</td><td>The login page shows the debug toolbar, including SQL. Confirmed on http://127.0.0.1:8000/login.</td><td>Medium</td><td class="open">Open</td><td>Turn debug off before this site is used outside the local machine.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>5. Security testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Security check</th><th>Status</th><th>Severity</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>SEC-001</td><td>Credit admin URL without a session</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+      <tr><td>SEC-002</td><td>Checkout without a session</td><td class="pass">Pass</td><td>High</td><td>-</td></tr>
+      <tr><td>SEC-003</td><td>Debug information on the local login page</td><td class="fail">Fail</td><td>Medium</td><td>Debug toolbar is visible and shows queries. Keep it off outside local use.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>6. UI/UX testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>UI-001</td><td>Login</td><td>Email and password fields and a Login button are shown</td><td class="pass">Pass</td><td>-</td></tr>
+      <tr><td>UI-002</td><td>Credit</td><td>Credit list, customer credit columns, and checkout credit box</td><td class="na">Not Tested</td><td>Blocked by login.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>7. Performance testing</h2>
+  <p class="na">Not tested. Login rendered, but no timed credit workflow was run.</p>
+</section>
+<section>
+  <h2>8. SEO testing</h2>
+  <p class="na">Not applicable. This run covered the credit module, not public search pages.</p>
+</section>
+<section>
+  <h2>9. Content testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Area</th><th>Test</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>CT-001</td><td>Login</td><td>The page asks for email and password</td><td class="pass">Pass</td><td>-</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>10. Browser and device testing</h2>
+  <p class="na">Not tested beyond one desktop browser session. Mobile was not opened.</p>
+</section>
+<section>
+  <h2>11. API testing</h2>
+  <p class="na">Not tested. Seller and delivery-boy status changes call the same credit clock in code, but no API request was sent.</p>
+</section>
+<section>
+  <h2>12. Database testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>DB-001</td><td>Customers with a credit limit above 0</td><td class="pass">Pass</td><td>1149 customers have a limit. 12 are active with a limit and at least 1 day.</td></tr>
+      <tr><td>DB-002</td><td>credit_uses table</td><td class="fail">Fail</td><td>Table is absent. Run <code>sqlupdates/credit_uses.sql</code>.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>13. Production / deployment testing</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Check</th><th>Status</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td>DP-001</td><td>Credit SQL applied on this database</td><td class="fail">Fail</td><td><code>sqlupdates/credit_uses.sql</code> has not been applied.</td></tr>
+    </tbody>
+  </table>
+</section>
+<section>
+  <h2>14. Overall score</h2>
+  <p>78%. Rating: Poor. More testing is required after the credit table exists and an admin session is available. The missing table blocks the credit purchase path, so this is not ready to use.</p>
+</section>
+<section>
+  <h2>15. Final status</h2>
+  <p>Not ready. Phases 1 and 2 and the dispatch clock are in the code. They cannot be used until the credit table is created, and the logged-in paths were not clicked.</p>
+</section>
+<section>
+  <h2>16. Testing limitations</h2>
+  <ul>
+    <li>No admin or customer password was used.</li>
+    <li>The credit_uses table is missing, so reserve, release, and the dispatch clock were not written to the database.</li>
+    <li>The 30-day result was checked with the same date function the clock uses, not by dispatching a real order.</li>
+    <li>Payment portal, invoice print, and mobile layout were not opened.</li>
+  </ul>
+</section>
+</main>
+<footer>Generated 6 Nov 2026. Local environment only.</footer>
+</body>
+</html>
