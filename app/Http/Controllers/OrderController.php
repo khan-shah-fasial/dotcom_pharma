@@ -559,6 +559,8 @@ class OrderController extends Controller
                 'credit_limit' => $customer->credit_limit,
                 'credit_balance_amount' => single_price(\App\Models\CreditUse::availableFor($customer)),
                 'credit_outstanding_amount' => single_price(\App\Models\CreditUse::outstandingFor($customer)),
+                'credit_can_use' => \App\Models\CreditUse::customerCanUse($customer),
+                'credit_purchase_blocked' => \App\Models\CreditUse::blocksPurchase($customer),
                 'default_shipping_method' => optional($details)->default_shipping_method
                     ?: 'transport',
                 'default_transport_id' => optional($details)->transport_id,
@@ -2233,9 +2235,8 @@ class OrderController extends Controller
         $order->delivery_status = $request->status;
         $order->save();
 
-        $creditOnOrder = \App\Models\CreditUse::tableReady()
-            ? (float) \App\Models\CreditUse::where('order_id', $order->id)->where('status', \App\Models\CreditUse::STATUS_RESERVED)->sum('amount')
-            : 0;
+        // Limit credit and prepaid top up both go back to the customer's credit on cancel, so neither is refunded to the wallet.
+        $creditOnOrder = \App\Models\CreditUse::appliedTo('order_id', (int) $order->id)['total'];
 
         if ($request->status == 'cancelled') {
             \App\Models\CreditUse::releaseForOrder($order);

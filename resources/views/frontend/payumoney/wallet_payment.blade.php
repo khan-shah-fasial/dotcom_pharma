@@ -28,7 +28,7 @@
 
         'udf3' => Session::get('currency_code') ?? 'none',
 
-        'udf4' => 'none',
+        'udf4' => Session::get('payment_data')['credit_payment_id'] ?? 'none',
         'udf5' => Session::get('payment_data')['payment_method'], 
     ];
 

@@ -91,6 +91,17 @@
                                     <label class="form-label">{{ translate('Outstanding Credit') }}</label>
                                     <p class="mb-0">{{ single_price(\App\Models\CreditUse::outstandingFor($user2)) }}</p>
                                 </div>
+                                @if (\App\Models\CreditUse::prepaidColumnReady())
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">{{ translate('Top up balance') }}</label>
+                                        <p class="mb-0">{{ single_price(\App\Models\CreditUse::prepaidFor($user2)) }}</p>
+                                    </div>
+                                @endif
+                                <div class="col-md-4 mb-3 d-flex align-items-end">
+                                    <a href="{{ route('credits.index', ['search' => $user2->phone ?: $user2->email]) }}" class="btn btn-soft-primary btn-sm">
+                                        {{ translate('View credit on orders') }}
+                                    </a>
+                                </div>
                             </div>
                             @if (\App\Models\CreditUse::blocksPurchase($user2))
                                 <div class="alert alert-warning py-2">{{ \App\Models\CreditUse::purchaseBlockMessage() }}</div>

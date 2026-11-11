@@ -298,7 +298,13 @@ class CheckoutController extends Controller
         $data['payment_method'] = $request->payment_option;
         $request->session()->put('payment_data', $data);
         if ($creditApplied > 0 && CreditUse::amountDueNow($combinedOrder->fresh()) <= 0.009) {
-            flash(translate('Your order has been placed on credit.'))->success();
+            $onFacility = CreditUse::query()
+                ->where('combined_order_id', $combinedOrder->id)
+                ->where('status', CreditUse::STATUS_RESERVED)
+                ->exists();
+            flash($onFacility
+                ? translate('Your order has been placed on credit.')
+                : translate('Your order has been placed.'))->success();
             return redirect()->route('order_confirmed');
         }
         if ($request->session()->get('combined_order_id') != null) {

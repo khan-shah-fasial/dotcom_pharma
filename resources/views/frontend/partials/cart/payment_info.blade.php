@@ -8,15 +8,29 @@
 @if (Auth::check() && \App\Models\CreditUse::customerCanUse(Auth::user()))
     @php
         $availableCredit = \App\Models\CreditUse::availableFor(Auth::user());
+        $prepaidCredit = \App\Models\CreditUse::prepaidFor(Auth::user());
     @endphp
-    <div class="border rounded p-3 mb-4">
-        <label class="aiz-checkbox mb-0">
+    <div class="mb-4">
+        <h3 class="fs-16 fw-700 text-dark">{{ translate('Credit') }}</h3>
+        <label class="aiz-megabox d-block mb-0">
             <input type="checkbox" name="use_credit" value="1">
-            <span class="aiz-square-check"></span>
-            <span class="fw-700">{{ translate('Use credit') }}</span>
+            <span class="d-flex align-items-start aiz-megabox-elem rounded-0 p-3">
+                <span class="aiz-square-check flex-shrink-0 mt-1"></span>
+                <span class="flex-grow-1 pl-3">
+                    <span class="d-block fw-700 fs-14 text-dark">{{ translate('Use credit') }}</span>
+                    <span class="d-flex flex-wrap fs-13 mt-1">
+                        <span class="mr-4">{{ translate('Top up balance') }}: <strong>{{ single_price($prepaidCredit) }}</strong></span>
+                        <span>{{ translate('Available Credit') }}: <strong>{{ single_price($availableCredit) }}</strong></span>
+                    </span>
+                    <span class="d-block fs-12 text-secondary mt-1">{{ translate('The top up balance is money already paid. It is used first and is not billed again. Credit from the limit is due after dispatch. Anything still left is paid now.') }}</span>
+                </span>
+            </span>
         </label>
-        <div class="fs-13 mt-2">{{ translate('Available Credit') }}: <strong>{{ single_price($availableCredit) }}</strong></div>
-        <div class="fs-13">{{ translate('Credit is applied up to the available credit. Any amount above that is paid now.') }}</div>
+    </div>
+@elseif (Auth::check() && \App\Models\CreditUse::visibleToCustomer(Auth::user()) && !\App\Models\CreditUse::blocksPurchase(Auth::user()))
+    <div class="border p-3 mb-4 fs-13 d-flex flex-wrap justify-content-between align-items-center">
+        <span class="text-secondary">{{ translate('No credit is available for this order.') }}</span>
+        <a href="{{ route('customer.credit.index') }}" class="fw-600">{{ translate('Top up credit') }} <i class="las la-angle-right"></i></a>
     </div>
 @endif
 <div>

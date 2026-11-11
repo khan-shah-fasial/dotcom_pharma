@@ -37,6 +37,11 @@ class WalletController extends Controller
 
     public function wallet_payment_done($payment_data, $payment_details)
     {
+        $creditResponse = app(CustomerCreditController::class)->paymentDone($payment_data, $payment_details);
+        if ($creditResponse !== null) {
+            return $creditResponse;
+        }
+
         $user = Auth::user();
         $user->balance = $user->balance + $payment_data['amount'];
         $user->save();

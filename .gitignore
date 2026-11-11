@@ -41,3 +41,8 @@ public/uploads.zip
 .env
 
 public/all
+# Local demo recordings (videos, audio, node_modules)
+/demo/
+
+# Backup of .env with live service keys
+.env.live-backup

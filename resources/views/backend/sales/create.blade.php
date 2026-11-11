@@ -1540,6 +1540,7 @@ span#picker-info-stock-badge {
                                 <div class="selected-location-card"></div>
                             </div>
                             @error('payment_type') <div class="text-danger small">{{ $message }}</div> @enderror
+                            <div id="credit-sale-note" class="alert d-none mb-0 mt-2"></div>
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Payment Status') }}</label>
@@ -1678,6 +1679,7 @@ span#picker-info-stock-badge {
             var quoteRequestSequence = 0;
             var debounceTimer = null;
             var customerAddresses = [];
+            var selectedCustomer = null;
             var currentInvoiceType = 'domestic';
             var locationCatalog = {
                 sea: @json($seaPortCatalog),
@@ -2180,6 +2182,37 @@ span#picker-info-stock-badge {
                 return html + '</div>';
             }
 
+            function syncCreditSale() {
+                var $note = $('#credit-sale-note');
+                var $button = $('#submit-order-btn');
+                var usingCredit = $('select[name="payment_type"]').val() === 'credit';
+                var blocked = !!(selectedCustomer && selectedCustomer.credit_purchase_blocked);
+                var canUse = !!(selectedCustomer && selectedCustomer.credit_can_use);
+
+                if (blocked) {
+                    $note.removeClass('d-none alert-info').addClass('alert alert-warning')
+                        .text('{{ translate('Credit is overdue. Clear the outstanding credit before placing another order.') }}');
+                    $button.prop('disabled', true);
+                    return;
+                }
+
+                $button.prop('disabled', false);
+                if (usingCredit && selectedCustomer && !canUse) {
+                    $note.removeClass('d-none alert-info').addClass('alert alert-warning')
+                        .text('{{ translate('Credit is not available for this order.') }}');
+                    return;
+                }
+                if (usingCredit && canUse) {
+                    $note.removeClass('d-none alert-warning').addClass('alert alert-info')
+                        .text('{{ translate('This sale reserves the customer credit. The due date starts on dispatch, and the order stays unpaid until the credit is marked paid.') }}');
+                    $('select[name="payment_status"]').val('unpaid');
+                    $('input[name="send_order_notification"][type="checkbox"]').prop('checked', false);
+                    return;
+                }
+
+                $note.addClass('d-none').removeClass('alert-info alert-warning').empty();
+            }
+
             function applyCustomerShippingDefaults(customer) {
                 var method = customer.default_shipping_method || 'transport';
                 $('#shipping-method').val(method).trigger('change');
@@ -2554,6 +2587,7 @@ span#picker-info-stock-badge {
                     $('<button type="button" class="list-group-item list-group-item-action"></button>')
                         .html('<strong>' + escapeHtml(displayCustomerName(customer)) + '</strong><br><small>' + escapeHtml(customerSubText(customer)) + '</small>')
                         .on('click', function () {
+                            selectedCustomer = customer;
                             $('#selected-customer-id').val(customer.id);
                             $('#sales-man-code').val(customer.sales_man_code || '');
                             $('#selected-customer-card').removeClass('d-none').html(customerMetaHtml(customer));
@@ -2561,6 +2595,7 @@ span#picker-info-stock-badge {
                             applyCustomerInvoiceType(customer);
                             applyCustomerShippingDefaults(customer);
                             loadAddresses(customer.id);
+                            syncCreditSale();
                             refreshSummary();
                         })
                         .appendTo($box);
@@ -3441,8 +3476,10 @@ span#picker-info-stock-badge {
             $('.js-market-switch').on('click', function () {
                 var newMarket = $(this).data('market');
                 if (newMarket === $('#sales-market-input').val()) return;
+                selectedCustomer = null;
                 $('#selected-customer-id').val('');
                 $('#selected-customer-card').addClass('d-none').empty();
+                syncCreditSale();
                 $('#customer-search').val('');
                 $('#customer-results').empty();
                 $('#billing-address-list,#shipping-address-list').empty();
@@ -3665,6 +3702,7 @@ span#picker-info-stock-badge {
             });
 
             $('select[name="payment_type"]').on('change', function () {
+                syncCreditSale();
                 if ($('#shipping-method').val() !== 'courier' || !$('#courier-provider').val()) return;
                 shippingItems = shippingItems.filter(function (item) { return item.source !== 'courier'; });
                 renderShippingItems();
@@ -3964,6 +4002,16 @@ span#picker-info-stock-badge {
                 if (!$('#selected-customer-id').val()) {
                     event.preventDefault();
                     notify('warning', '{{ translate('Please select an approved customer.') }}');
+                    return;
+                }
+                if (selectedCustomer && selectedCustomer.credit_purchase_blocked) {
+                    event.preventDefault();
+                    notify('warning', '{{ translate('Credit is overdue. Clear the outstanding credit before placing another order.') }}');
+                    return;
+                }
+                if ($('select[name="payment_type"]').val() === 'credit' && selectedCustomer && !selectedCustomer.credit_can_use) {
+                    event.preventDefault();
+                    notify('warning', '{{ translate('Credit is not available for this order.') }}');
                     return;
                 }
                 if (!$('input[name="billing_address_id"]:checked').length) {

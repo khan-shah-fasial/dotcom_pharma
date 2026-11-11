@@ -49,6 +49,9 @@ class PayumoneyController extends Controller
             $paymentType = $request->udf2;
             $combined_order_id = $request->udf4;
             $paymentData = ['order_id' => $request->udf4, 'payment_method' => $request->udf5, 'amount' => $request->amount];
+            if ($paymentType == 'wallet_payment' && is_numeric($request->udf4)) {
+                $paymentData['credit_payment_id'] = (int) $request->udf4;
+            }
 
             // currency data
             if(isset($request->udf3) && !empty($request->udf3)){

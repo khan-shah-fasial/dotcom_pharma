@@ -12,6 +12,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\GiftController;
+use App\Http\Controllers\CustomerCreditController;
 use App\Http\Controllers\CustomerPackageController;
 use App\Http\Controllers\CustomerProductController;
 use App\Http\Controllers\DemoController;
@@ -546,6 +547,12 @@ Route::group(['middleware' => ['customer', 'verified', 'unbanned']], function ()
     Route::controller(WalletController::class)->group(function () {
         Route::get('/wallet', 'index')->name('wallet.index');
         Route::post('/recharge', 'recharge')->name('wallet.recharge');
+    });
+
+    Route::controller(CustomerCreditController::class)->group(function () {
+        Route::get('/credit', 'index')->name('customer.credit.index');
+        Route::post('/credit/topup', 'topup')->name('customer.credit.topup');
+        Route::post('/credit/pay', 'pay')->name('customer.credit.pay');
     });
 
     // Gifts (frontend)

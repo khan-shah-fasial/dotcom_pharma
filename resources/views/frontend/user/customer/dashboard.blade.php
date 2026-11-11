@@ -17,6 +17,38 @@
         </div>
     @endif
 
+    @if (Auth::check() && \App\Models\CreditUse::visibleToCustomer(Auth::user()))
+        @php
+            $creditBlocked = \App\Models\CreditUse::blocksPurchase(Auth::user());
+        @endphp
+        <div class="bg-white border p-4 mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <span class="fs-16 fw-700 text-dark">{{ translate('My Credit') }}</span>
+                @if ($creditBlocked)
+                    <span class="badge badge-inline badge-danger p-2 fs-12" style="border-radius: 25px;">{{ translate('Overdue') }}</span>
+                @endif
+            </div>
+            <div class="row gutters-16">
+                <div class="col-4">
+                    <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Available Credit') }}</p>
+                    <span class="fs-18 fw-700 text-dark">{{ single_price(\App\Models\CreditUse::availableFor(Auth::user())) }}</span>
+                </div>
+                <div class="col-4">
+                    <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Outstanding Credit') }}</p>
+                    <span class="fs-18 fw-700 {{ $creditBlocked ? 'text-danger' : 'text-dark' }}">{{ single_price(\App\Models\CreditUse::outstandingFor(Auth::user())) }}</span>
+                </div>
+                <div class="col-4">
+                    <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Top up balance') }}</p>
+                    <span class="fs-18 fw-700 text-dark">{{ single_price(\App\Models\CreditUse::prepaidFor(Auth::user())) }}</span>
+                </div>
+            </div>
+            <a href="{{ route('customer.credit.index') }}" class="fs-12 text-reset d-inline-block mt-3">
+                {{ $creditBlocked ? translate('Pay overdue credit') : translate('Pay or top up') }}
+                <i class="las la-angle-right fs-14"></i>
+            </a>
+        </div>
+    @endif
+
     <div class="row gutters-16">
         <!-- Wallet summary -->
         @if (get_setting('wallet_system') == 1)

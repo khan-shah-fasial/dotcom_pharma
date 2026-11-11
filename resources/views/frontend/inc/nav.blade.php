@@ -1511,6 +1511,15 @@ body .translater_menu .select2-container {
                                             </a>
                                         </li>
                                     @endif
+                                    @if (auth()->check() && \App\Models\CreditUse::visibleToCustomer(auth()->user()))
+                                        <li class="user-top-nav-element border border-top-0" data-id="1">
+                                            <a href="{{ route('customer.credit.index') }}"
+                                                class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
+                                                <i class="las la-file-invoice-dollar"></i>
+                                                <span class="user-top-menu-name has-transition ml-3">{{ translate('My Credit') }}</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                     <li class="d-none user-top-nav-element border border-top-0" data-id="1">
                                         <a href="{{ route('financial-archives.user') }}" class="text-truncate text-dark px-4 fs-14 d-flex align-items-center hov-column-gap-1">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
@@ -1894,6 +1903,15 @@ body .translater_menu .select2-container {
                                     class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
                                     {{ areActiveRoutes(['wallet.index'], ' active') }}">
                                     {{ translate('My Wallet') }}
+                                </a>
+                            </li>
+                        @endif
+                        @if (auth()->check() && \App\Models\CreditUse::visibleToCustomer(auth()->user()))
+                            <li class="mr-0">
+                                <a href="{{ route('customer.credit.index') }}"
+                                    class="fs-13 px-3 py-3 w-100 d-inline-block fw-700 text-dark header_menu_links
+                                    {{ areActiveRoutes(['customer.credit.index'], ' active') }}">
+                                    {{ translate('My Credit') }}
                                 </a>
                             </li>
                         @endif

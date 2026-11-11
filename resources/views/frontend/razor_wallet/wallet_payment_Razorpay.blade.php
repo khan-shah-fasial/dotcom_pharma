@@ -12,7 +12,7 @@
             "amount": "{{ Session::get('payment_data')['amount'] * 100 }}", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
             "currency": "INR",
             "name": "{{ env('APP_NAME') }}", //your business name
-            "description": "{{ Session::get('payment_type') }}",
+            "description": "{{ in_array(data_get(Session::get('payment_data'), 'purpose'), ['topup', 'settle'], true) ? translate('Credit') : Session::get('payment_type') }}",
             "image": "{{ uploaded_asset(get_setting('header_logo')) }}",
             "order_id": "{{ $res->id }}", //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
             "callback_url": "{{ route('payment.rozer') }}",
@@ -35,7 +35,7 @@
             e.preventDefault();
         });
         $('#modal-close').click(function(){
-            window.location = "{{ route('wallet.index') }}";
+            window.location = "{{ in_array(data_get(Session::get('payment_data'), 'purpose'), ['topup', 'settle'], true) ? route('customer.credit.index') : route('wallet.index') }}";
         });
     </script>
   

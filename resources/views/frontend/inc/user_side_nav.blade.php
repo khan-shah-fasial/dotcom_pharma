@@ -336,6 +336,16 @@
                     </li>
                 @endif
 
+                @if (auth()->check() && \App\Models\CreditUse::visibleToCustomer(auth()->user()))
+                    <li class="aiz-side-nav-item">
+                        <a href="{{ route('customer.credit.index') }}"
+                            class="aiz-side-nav-link {{ areActiveRoutes(['customer.credit.index']) }}">
+                            <i class="las la-file-invoice-dollar"></i>
+                            <span class="aiz-side-nav-text ml-3">{{ translate('My Credit') }}</span>
+                        </a>
+                    </li>
+                @endif
+
                 <!-- Financial Archive -->
                 <li class="aiz-side-nav-item">
                     <a href="{{ route('financial-archives.user') }}"

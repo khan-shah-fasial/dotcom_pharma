@@ -111,18 +111,24 @@
                                         <td class="border-top-0 pr-0 py-2">{{ single_price($combined_order->grand_total) }}</td>
                                     </tr>
                                     @php
-                                        $creditApplied = \App\Models\CreditUse::tableReady()
-                                            ? (float) \App\Models\CreditUse::where('combined_order_id', $combined_order->id)->where('status', 'reserved')->sum('amount')
-                                            : 0;
+                                        $creditApplied = \App\Models\CreditUse::appliedTo('combined_order_id', (int) $combined_order->id);
                                     @endphp
-                                    @if ($creditApplied > 0)
-                                        <tr>
-                                            <td class="w-50 fw-600 border-top-0 py-2">{{ translate('Credit') }}:</td>
-                                            <td class="border-top-0 pr-0 py-2">{{ single_price($creditApplied) }}</td>
-                                        </tr>
+                                    @if ($creditApplied['total'] > 0)
+                                        @if ($creditApplied['prepaid'] > 0)
+                                            <tr>
+                                                <td class="w-50 fw-600 border-top-0 py-2">{{ translate('Top up balance used') }}:</td>
+                                                <td class="border-top-0 pr-0 py-2">{{ single_price($creditApplied['prepaid']) }}</td>
+                                            </tr>
+                                        @endif
+                                        @if ($creditApplied['facility'] > 0)
+                                            <tr>
+                                                <td class="w-50 fw-600 border-top-0 py-2">{{ translate('Credit') }}:</td>
+                                                <td class="border-top-0 pr-0 py-2">{{ single_price($creditApplied['facility']) }}</td>
+                                            </tr>
+                                        @endif
                                         <tr>
                                             <td class="w-50 fw-600 border-top-0 py-2">{{ translate('Pay now') }}:</td>
-                                            <td class="border-top-0 pr-0 py-2">{{ single_price(max(0, $combined_order->grand_total - $creditApplied)) }}</td>
+                                            <td class="border-top-0 pr-0 py-2">{{ single_price(max(0, $combined_order->grand_total - $creditApplied['total'])) }}</td>
                                         </tr>
                                     @endif
                                     <tr>

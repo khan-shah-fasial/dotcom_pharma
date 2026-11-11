@@ -79,9 +79,8 @@ class OrderController extends Controller
         $order->delivery_status = $request->status;
         $order->save();
 
-        $creditOnOrder = \App\Models\CreditUse::tableReady()
-            ? (float) \App\Models\CreditUse::where('order_id', $order->id)->where('status', \App\Models\CreditUse::STATUS_RESERVED)->sum('amount')
-            : 0;
+        // Limit credit and prepaid top up both go back to the customer's credit on cancel, so neither is refunded to the wallet.
+        $creditOnOrder = \App\Models\CreditUse::appliedTo('order_id', (int) $order->id)['total'];
 
         if ($request->status == 'cancelled') {
             \App\Models\CreditUse::releaseForOrder($order);
