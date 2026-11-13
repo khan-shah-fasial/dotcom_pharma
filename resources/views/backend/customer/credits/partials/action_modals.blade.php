@@ -130,8 +130,9 @@
                     </p>
                     <div class="form-group">
                         <label for="credit_paid_amount">{{ translate('Amount received') }}</label>
-                        <input type="number" lang="en" step="0.01" min="0.01" id="credit_paid_amount" name="amount" class="form-control js-credit-paid-amount">
-                        <small class="text-muted">{{ translate('Leave as is to clear it in full. A smaller amount is a part payment: it goes back into the available credit and the rest stays owed.') }}</small>
+                        <input type="number" lang="en" inputmode="decimal" step="0.01" min="0.01" id="credit_paid_amount" name="amount" class="form-control js-credit-paid-amount" required>
+                        <small class="d-block mt-1 fw-600 js-credit-paid-hint"></small>
+                        <small class="text-muted">{{ translate('A smaller amount is a part payment: it goes back into the available credit and the rest stays owed.') }}</small>
                     </div>
                     <div class="form-group">
                         <label for="credit_paid_method">{{ translate('Paid by') }}</label>
@@ -154,7 +155,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Cancel') }}</button>
-                    <button type="submit" class="btn btn-success">{{ translate('Mark paid') }}</button>
+                    <button type="submit" class="btn btn-success js-credit-paid-submit">{{ translate('Mark paid') }}</button>
                 </div>
             </div>
         </form>
@@ -172,6 +173,45 @@
             pick: @json(translate('Choose a customer first.'))
         };
         var searchTimer = null;
+        var paidText = {
+            full: @json(translate('Clears this credit in full.')),
+            part: @json(translate('Part payment. Still owed after this:')),
+            over: @json(translate('More than what is owed.')),
+            markPaid: @json(translate('Mark paid')),
+            recordPart: @json(translate('Record part payment'))
+        };
+
+        // Live hint under "Amount received": full, part (with what stays owed) or too much.
+        function paidHint() {
+            var modal = document.getElementById('creditMarkPaidModal');
+            var input = modal.querySelector('.js-credit-paid-amount');
+            var hint = modal.querySelector('.js-credit-paid-hint');
+            var submit = modal.querySelector('.js-credit-paid-submit');
+            var owed = parseFloat(input.max) || 0;
+            var value = parseFloat(input.value) || 0;
+            var left = Math.round((owed - value) * 100) / 100;
+            if (value - owed > 0.009) {
+                hint.textContent = paidText.over;
+                hint.className = 'd-block mt-1 fw-600 text-danger js-credit-paid-hint'; hint.style.color = '';
+                submit.disabled = true;
+            } else if (left > 0.009 && value > 0) {
+                hint.textContent = paidText.part + ' ' + left.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                hint.className = 'd-block mt-1 fw-600 js-credit-paid-hint'; hint.style.color = '#9a5b00';
+                submit.disabled = false;
+                submit.textContent = paidText.recordPart;
+            } else {
+                hint.textContent = value > 0 ? paidText.full : '';
+                hint.className = 'd-block mt-1 fw-600 text-success js-credit-paid-hint'; hint.style.color = '';
+                submit.disabled = value <= 0;
+                submit.textContent = paidText.markPaid;
+            }
+        }
+
+        document.addEventListener('input', function (event) {
+            if (event.target.classList.contains('js-credit-paid-amount')) {
+                paidHint();
+            }
+        });
 
         function accountModal() {
             return document.getElementById('creditAccountModal');
@@ -312,6 +352,7 @@
                 var paidAmount = paidModal.querySelector('.js-credit-paid-amount');
                 paidAmount.value = paid.dataset.raw || '';
                 paidAmount.max = paid.dataset.raw || '';
+                paidHint();
                 $(paidModal).modal('show');
             }
         });

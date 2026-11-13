@@ -13,27 +13,31 @@
         ];
     @endphp
 
+    @include('backend.customer.credits.partials.admin_styles')
+
     <div class="aiz-titlebar text-left mt-2 mb-3">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h1 class="h3">{{ translate('Credit') }}</h1>
+        <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap: 10px;">
+            <div>
+                <h1 class="h3 mb-0">{{ translate('Credit') }}</h1>
+                <div class="text-muted fs-13">{{ translate('Customer credit accounts and credit taken on orders') }}</div>
             </div>
-            <div class="col-md-6 text-md-right">
-                @if ($filtersApplied)
-                    <span class="badge badge-inline badge-info mr-2">{{ translate('Filters applied') }}</span>
-                @endif
+            <div class="crd-toolbar">
                 @can('ban_customer')
-                    <button type="button" class="btn btn-primary mr-2 js-credit-account" data-mode="create">
-                        <i class="las la-plus"></i> {{ translate('Add credit account') }}
+                    <button type="button" class="btn btn-primary js-credit-account" data-mode="create">
+                        <i class="las la-plus"></i> <span>{{ translate('Add credit account') }}</span>
                     </button>
                 @endcan
-                <a href="{{ route('credits.payments') }}" class="btn btn-soft-primary mr-2">
-                    <i class="las la-receipt"></i> {{ translate('Credit payments') }}
+                <a href="{{ route('credits.payments') }}" class="btn btn-soft-primary">
+                    <i class="las la-receipt"></i> <span>{{ translate('Payments') }}</span>
                 </a>
-                <button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#creditFilterModal">
-                    <i class="las la-filter"></i> {{ translate('Open Filters') }}
+                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#creditFilterModal">
+                    <i class="las la-filter"></i> <span>{{ translate('Filter') }}</span>
                 </button>
-                <a href="{{ route('credits.index') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                @if ($filtersApplied)
+                    <a href="{{ route('credits.index') }}" class="btn btn-soft-danger" title="{{ translate('Clear filters') }}">
+                        <i class="las la-times"></i> <span>{{ translate('Clear') }}</span>
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -44,6 +48,38 @@
         </div>
     @endif
 
+    {{-- Totals across all customers; each card opens the matching filter. --}}
+    <div class="crd-kpis mb-3">
+        <a class="crd-kpi" href="{{ route('credits.index', ['use_status' => 'reserved']) }}">
+            <span class="crd-kpi-label">{{ translate('Owed to you') }}</span>
+            <span class="crd-kpi-value">{{ single_price($summary['owed']) }}</span>
+            <span class="crd-kpi-sub">{{ $summary['owed_count'] }} {{ $summary['owed_count'] === 1 ? translate('open credit') : translate('open credits') }}</span>
+        </a>
+        <a class="crd-kpi {{ $summary['overdue'] > 0 ? 'is-danger' : '' }}" href="{{ route('credits.index', ['use_status' => 'overdue', 'balance' => 'overdue']) }}">
+            <span class="crd-kpi-label">{{ translate('Overdue') }}</span>
+            <span class="crd-kpi-value">{{ single_price($summary['overdue']) }}</span>
+            <span class="crd-kpi-sub">{{ $summary['overdue_customers'] }} {{ $summary['overdue_customers'] === 1 ? translate('customer blocked') : translate('customers blocked') }}</span>
+        </a>
+        <a class="crd-kpi {{ $summary['due_week'] > 0 ? 'is-warning' : '' }}"
+            href="{{ route('credits.index', ['use_status' => 'reserved', 'due_from' => now()->toDateString(), 'due_to' => now()->addDays(7)->toDateString()]) }}">
+            <span class="crd-kpi-label">{{ translate('Due in 7 days') }}</span>
+            <span class="crd-kpi-value">{{ single_price($summary['due_week']) }}</span>
+            <span class="crd-kpi-sub">{{ $summary['due_week_count'] }} {{ $summary['due_week_count'] === 1 ? translate('credit') : translate('credits') }}</span>
+        </a>
+        @if ($prepaidReady)
+            <a class="crd-kpi" href="{{ route('credits.index', ['balance' => 'prepaid']) }}">
+                <span class="crd-kpi-label">{{ translate('Top up held') }}</span>
+                <span class="crd-kpi-value">{{ single_price($summary['topup']) }}</span>
+                <span class="crd-kpi-sub">{{ translate('Paid in advance') }}</span>
+            </a>
+        @endif
+        <a class="crd-kpi" href="{{ route('credits.index', ['credit_status' => 'active']) }}">
+            <span class="crd-kpi-label">{{ translate('Active accounts') }}</span>
+            <span class="crd-kpi-value">{{ $summary['active'] }}</span>
+            <span class="crd-kpi-sub">{{ translate('With credit on') }}</span>
+        </a>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <h5 class="mb-0 h6">{{ translate('Credit accounts') }}</h5>
@@ -52,17 +88,17 @@
             <table class="table aiz-table mb-0">
                 <thead>
                     <tr>
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'id', 'label' => '#'])
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'id', 'label' => '#', 'breakpoints' => 'md'])
                         @include('backend.inc.sortable_th', $accountSort + ['column' => 'name', 'label' => translate('Customer')])
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_status', 'label' => translate('Credit Status'), 'breakpoints' => 'md'])
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_days', 'label' => translate('Number of Days'), 'breakpoints' => 'lg'])
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_limit', 'label' => translate('Credit Limit'), 'breakpoints' => 'md'])
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_status', 'label' => translate('Status'), 'breakpoints' => 'sm'])
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_days', 'label' => translate('Days'), 'breakpoints' => 'lg'])
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_limit', 'label' => translate('Limit'), 'breakpoints' => 'md'])
                         @if ($prepaidReady)
-                            @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_prepaid', 'label' => translate('Top up balance'), 'breakpoints' => 'lg'])
+                            @include('backend.inc.sortable_th', $accountSort + ['column' => 'credit_prepaid', 'label' => translate('Top up'), 'breakpoints' => 'lg'])
                         @endif
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'available_sum', 'label' => translate('Available Credit')])
-                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'outstanding_sum', 'label' => translate('Outstanding Credit')])
-                        <th class="text-right" width="8%">{{ translate('Options') }}</th>
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'available_sum', 'label' => translate('Available'), 'breakpoints' => 'sm'])
+                        @include('backend.inc.sortable_th', $accountSort + ['column' => 'outstanding_sum', 'label' => translate('Owed'), 'thClass' => 'text-right text-md-left'])
+                        <th class="text-right" width="8%"><span class="d-none d-md-inline">{{ translate('Options') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -80,6 +116,20 @@
                             <td>
                                 <div class="fw-600">{{ $company ?: $account->name }}</div>
                                 <div class="text-muted fs-12">{{ $account->phone ?: $account->email }}</div>
+                                <div class="d-md-none mt-1">
+                                    @if (!$account->creditIsActive())
+                                        <span class="badge badge-inline badge-secondary">{{ translate('Deactive') }}</span>
+                                    @endif
+                                    @if ($isBlocked)
+                                        <span class="badge badge-inline badge-danger">{{ translate('Overdue') }}</span>
+                                    @endif
+                                </div>
+                                @if ((float) $account->credit_limit > 0)
+                                    @php $usedPct = min(100, round($outstandingCredit / max(1, (float) $account->credit_limit) * 100)); @endphp
+                                    <div class="crd-mini-bar mt-2 {{ $usedPct >= 80 ? 'is-high' : '' }}" title="{{ $usedPct }}% {{ translate('of limit used') }}">
+                                        <span style="width: {{ $usedPct }}%;"></span>
+                                    </div>
+                                @endif
                             </td>
                             <td>
                                 @if ($account->creditIsActive())
@@ -97,8 +147,9 @@
                                 <td class="text-nowrap">{{ single_price(\App\Models\CreditUse::prepaidFor($account)) }}</td>
                             @endif
                             <td class="fw-600 text-nowrap">{{ single_price($availableCredit) }}</td>
-                            <td class="fw-600 text-nowrap {{ $outstandingCredit > 0 ? 'text-danger' : '' }}">{{ single_price($outstandingCredit) }}</td>
-                            <td class="text-right text-nowrap">
+                            <td class="fw-600 text-nowrap text-right text-md-left {{ $isBlocked ? 'text-danger' : '' }}">{{ single_price($outstandingCredit) }}</td>
+                            <td class="text-right">
+                                <div class="crd-actions">
                                 @can('ban_customer')
                                     <button type="button" class="btn btn-soft-success btn-icon btn-circle btn-sm js-credit-account"
                                         data-mode="edit"
@@ -131,6 +182,7 @@
                                     title="{{ translate('View') }}">
                                     <i class="las la-eye"></i>
                                 </a>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -157,19 +209,19 @@
                 <table class="table aiz-table mb-0">
                     <thead>
                         <tr>
-                            @include('backend.inc.sortable_th', $useSort + ['column' => 'id', 'label' => '#'])
+                            @include('backend.inc.sortable_th', $useSort + ['column' => 'id', 'label' => '#', 'breakpoints' => 'md'])
                             @include('backend.inc.sortable_th', $useSort + ['column' => 'customer', 'label' => translate('Customer')])
-                            @include('backend.inc.sortable_th', $useSort + ['column' => 'order', 'label' => translate('Order')])
+                            @include('backend.inc.sortable_th', $useSort + ['column' => 'order', 'label' => translate('Order'), 'breakpoints' => 'sm'])
                             @if ($kindReady)
                                 @include('backend.inc.sortable_th', $useSort + ['column' => 'kind', 'label' => translate('Type'), 'breakpoints' => 'md'])
                             @endif
                             @include('backend.inc.sortable_th', $useSort + ['column' => 'amount', 'label' => translate('Credit')])
-                            @include('backend.inc.sortable_th', $useSort + ['column' => 'credit_days', 'label' => translate('Number of Days'), 'breakpoints' => 'lg'])
-                            @include('backend.inc.sortable_th', $useSort + ['column' => 'started_on', 'label' => translate('Credit start'), 'breakpoints' => 'lg'])
-                            @include('backend.inc.sortable_th', $useSort + ['column' => 'due_on', 'label' => translate('Credit due'), 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', $useSort + ['column' => 'credit_days', 'label' => translate('Days'), 'breakpoints' => 'lg'])
+                            @include('backend.inc.sortable_th', $useSort + ['column' => 'started_on', 'label' => translate('Dispatched'), 'breakpoints' => 'lg'])
+                            @include('backend.inc.sortable_th', $useSort + ['column' => 'due_on', 'label' => translate('Due'), 'breakpoints' => 'sm'])
                             @include('backend.inc.sortable_th', $useSort + ['column' => 'status', 'label' => translate('Status')])
                             @include('backend.inc.sortable_th', $useSort + ['column' => 'created_at', 'label' => translate('Date'), 'breakpoints' => 'lg'])
-                            <th class="text-right">{{ translate('Options') }}</th>
+                            <th class="text-right"><span class="d-none d-md-inline">{{ translate('Options') }}</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -183,18 +235,52 @@
                                         ? 'badge-warning'
                                         : ($use->status === \App\Models\CreditUse::STATUS_PAID ? 'badge-success' : 'badge-secondary'));
                             @endphp
+                            @php
+                                $isOpen = $use->status === \App\Models\CreditUse::STATUS_RESERVED;
+                                $daysLeft = $isOpen ? $use->daysLeft() : null;
+                                $dueNote = $daysLeft === null ? '' : ($daysLeft < 0
+                                    ? abs($daysLeft) . ' ' . translate('days overdue')
+                                    : ($daysLeft === 0 ? translate('Due today') : translate('in') . ' ' . $daysLeft . ' ' . translate('days')));
+                                $dueClass = $daysLeft === null ? 'text-muted' : ($daysLeft < 0 ? 'text-danger' : ($daysLeft <= 7 ? 'text-warning' : 'text-muted'));
+                                $usedOnOrder = $isOpen && !$isPrepaid ? $use->usedOnOrder() : 0;
+                                $orderLabel = optional($use->order)->code ?: ($use->order_id ?: '-');
+                            @endphp
                             <tr>
                                 <td>{{ $key + 1 + ($uses->currentPage() - 1) * $uses->perPage() }}</td>
-                                <td class="fw-600">{{ $company ?: optional($use->user)->name }}</td>
-                                <td class="text-nowrap">{{ optional($use->order)->code ?: ($use->order_id ?: '-') }}</td>
+                                <td>
+                                    <div class="fw-600">{{ $company ?: optional($use->user)->name }}</div>
+                                    <div class="text-muted fs-12 d-md-none">{{ $orderLabel }}</div>
+                                </td>
+                                <td class="text-nowrap">
+                                    @if ($use->order)
+                                        <a href="{{ route('all_orders.show', encrypt($use->order->id)) }}" class="text-reset fw-600">{{ $orderLabel }}</a>
+                                    @else
+                                        {{ $orderLabel }}
+                                    @endif
+                                </td>
                                 @if ($kindReady)
                                     <td>{{ $isPrepaid ? translate('Top up') : translate('Credit limit') }}</td>
                                 @endif
-                                <td class="fw-600 text-nowrap">{{ single_price($use->amount) }}</td>
+                                <td>
+                                    <div class="fw-600 text-nowrap">{{ single_price($use->amount) }}</div>
+                                    @if ($usedOnOrder - (float) $use->amount > 0.009)
+                                        <div class="fs-11 text-success" style="line-height: 1.3;">{{ single_price($usedOnOrder - (float) $use->amount) }} {{ translate('paid of') }} {{ single_price($usedOnOrder) }}</div>
+                                    @endif
+                                </td>
                                 <td>{{ $isPrepaid ? '-' : (int) $use->credit_days }}</td>
                                 <td class="text-nowrap">{{ $use->started_on ? $use->started_on->format('d-m-Y') : '—' }}</td>
-                                <td class="text-nowrap">{{ $use->due_on ? $use->due_on->format('d-m-Y') : ($use->status === \App\Models\CreditUse::STATUS_RESERVED ? translate('Starts on dispatch') : '—') }}</td>
-                                <td><span class="badge badge-inline {{ $statusClass }}">{{ $use->statusLabel() }}</span></td>
+                                <td class="text-nowrap">
+                                    {{ $use->due_on ? $use->due_on->format('d-m-Y') : ($isOpen ? translate('Starts on dispatch') : '—') }}
+                                    @if ($dueNote !== '')
+                                        <div class="fs-11 fw-600 {{ $dueClass }}">{{ $dueNote }}</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge badge-inline {{ $statusClass }}">{{ $use->statusLabel() }}</span>
+                                    @if ($dueNote !== '')
+                                        <div class="fs-11 fw-600 mt-1 d-md-none {{ $dueClass }}">{{ $dueNote }}</div>
+                                    @endif
+                                </td>
                                 <td class="text-nowrap">{{ optional($use->created_at)->format('d-m-Y H:i') }}</td>
                                 <td class="text-right">
                                     @can('ban_customer')

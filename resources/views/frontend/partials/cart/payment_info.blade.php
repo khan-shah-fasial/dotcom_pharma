@@ -9,20 +9,43 @@
     @php
         $availableCredit = \App\Models\CreditUse::availableFor(Auth::user());
         $prepaidCredit = \App\Models\CreditUse::prepaidFor(Auth::user());
+        // Same order as CreditUse::reserveForCombined: credit limit, then top up, then online.
+        $orderTotal = round((float) ($total ?? 0), 2);
+        $fromLimit = round(min($availableCredit, $orderTotal), 2);
+        $fromTopup = round(min($prepaidCredit, max(0, $orderTotal - $fromLimit)), 2);
+        $payOnline = round(max(0, $orderTotal - $fromLimit - $fromTopup), 2);
     @endphp
+    <style>
+        .credit-split { display: flex; gap: 6px; margin-top: 10px; }
+        .credit-split > span { flex: 1 1 0; min-width: 0; background: #f6f8fb; padding: 8px 10px; }
+        .credit-split small { display: block; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .credit-split strong { display: block; font-size: 14px; color: #111827; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .credit-split .is-zero strong { color: #9ca3af; }
+        @media (max-width: 575.98px) {
+            .credit-split { flex-direction: column; }
+            .credit-split > span { display: flex; justify-content: space-between; align-items: center; }
+        }
+    </style>
     <div class="mb-4">
         <h3 class="fs-16 fw-700 text-dark">{{ translate('Credit') }}</h3>
         <label class="aiz-megabox d-block mb-0">
             <input type="checkbox" name="use_credit" value="1">
             <span class="d-flex align-items-start aiz-megabox-elem rounded-0 p-3">
                 <span class="aiz-square-check flex-shrink-0 mt-1"></span>
-                <span class="flex-grow-1 pl-3">
-                    <span class="d-block fw-700 fs-14 text-dark">{{ translate('Use credit') }}</span>
-                    <span class="d-flex flex-wrap fs-13 mt-1">
-                        <span class="mr-4">{{ translate('Top up balance') }}: <strong>{{ single_price($prepaidCredit) }}</strong></span>
-                        <span>{{ translate('Available Credit') }}: <strong>{{ single_price($availableCredit) }}</strong></span>
+                <span class="flex-grow-1 pl-3" style="min-width: 0;">
+                    <span class="d-block fw-700 fs-14 text-dark">{{ translate('Use credit for this order') }}</span>
+                    <span class="d-block fs-12 text-secondary mt-1">
+                        <span class="text-nowrap">{{ translate('Available credit') }} <strong class="text-dark">{{ single_price($availableCredit) }}</strong></span>
+                        &middot; <span class="text-nowrap">{{ translate('Top up balance') }} <strong class="text-dark">{{ single_price($prepaidCredit) }}</strong></span>
                     </span>
-                    <span class="d-block fs-12 text-secondary mt-1">{{ translate('Credit from your limit is used first and is due after dispatch. Then the top up balance (money already paid, not billed again). Anything still left is paid online now.') }}</span>
+                    @if ($orderTotal > 0)
+                        <span class="credit-split">
+                            <span class="{{ $fromLimit > 0 ? '' : 'is-zero' }}"><small>1 &middot; {{ translate('Credit limit') }}</small><strong>{{ single_price($fromLimit) }}</strong></span>
+                            <span class="{{ $fromTopup > 0 ? '' : 'is-zero' }}"><small>2 &middot; {{ translate('Top up') }}</small><strong>{{ single_price($fromTopup) }}</strong></span>
+                            <span class="{{ $payOnline > 0 ? '' : 'is-zero' }}"><small>3 &middot; {{ translate('Pay online') }}</small><strong>{{ single_price($payOnline) }}</strong></span>
+                        </span>
+                    @endif
+                    <span class="d-block fs-12 text-secondary mt-2">{{ translate('Credit from your limit is due after dispatch. Top up is money already paid and is not billed again.') }}</span>
                 </span>
             </span>
         </label>

@@ -295,7 +295,10 @@ class CreditController extends Controller
             return $value !== '';
         });
 
+        $summary = $this->summary($tableReady, $prepaidReady);
+
         return view('backend.customer.credits.index', compact(
+            'summary',
             'accounts',
             'outstanding',
             'overdueIds',
@@ -310,6 +313,47 @@ class CreditController extends Controller
             'usesSortBy',
             'usesSortDir'
         ));
+    }
+
+    /**
+     * Totals across all customers for the summary strip on the Credit page (not affected by filters).
+     */
+    protected function summary(bool $tableReady, bool $prepaidReady): array
+    {
+        $summary = [
+            'owed' => 0.0, 'owed_count' => 0,
+            'overdue' => 0.0, 'overdue_count' => 0, 'overdue_customers' => 0,
+            'due_week' => 0.0, 'due_week_count' => 0,
+            'topup' => 0.0,
+            'active' => 0,
+        ];
+
+        $summary['active'] = User::query()->where('user_type', 'customer')->where('credit_status', 'active')->count();
+        if ($prepaidReady) {
+            $summary['topup'] = round((float) User::query()->where('user_type', 'customer')->sum('credit_prepaid'), 2);
+        }
+        if (!$tableReady) {
+            return $summary;
+        }
+
+        $today = now()->toDateString();
+        $open = CreditUse::query()->where('status', CreditUse::STATUS_RESERVED);
+
+        $summary['owed'] = round((float) (clone $open)->sum('amount'), 2);
+        $summary['owed_count'] = (clone $open)->count();
+
+        $overdue = (clone $open)->whereNotNull('due_on')->whereDate('due_on', '<', $today);
+        $summary['overdue'] = round((float) (clone $overdue)->sum('amount'), 2);
+        $summary['overdue_count'] = (clone $overdue)->count();
+        $summary['overdue_customers'] = (clone $overdue)->distinct()->count('user_id');
+
+        $week = (clone $open)->whereNotNull('due_on')
+            ->whereDate('due_on', '>=', $today)
+            ->whereDate('due_on', '<=', now()->addDays(7)->toDateString());
+        $summary['due_week'] = round((float) (clone $week)->sum('amount'), 2);
+        $summary['due_week_count'] = (clone $week)->count();
+
+        return $summary;
     }
 
     protected function accountsQuery(array $filters, bool $tableReady, bool $prepaidReady)

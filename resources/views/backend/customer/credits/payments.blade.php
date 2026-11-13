@@ -5,22 +5,23 @@
         $paymentSort = ['routeName' => 'credits.payments', 'sortBy' => $sortBy, 'sortDir' => $sortDir];
     @endphp
 
+    @include('backend.customer.credits.partials.admin_styles')
+
     <div class="aiz-titlebar text-left mt-2 mb-3">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h1 class="h3">{{ translate('Credit payments') }}</h1>
+        <div class="d-flex flex-wrap align-items-center justify-content-between" style="gap: 10px;">
+            <div>
+                <a href="{{ route('credits.index') }}" class="fs-13 text-muted"><i class="las la-arrow-left"></i> {{ translate('Credit') }}</a>
+                <h1 class="h3 mb-0">{{ translate('Credit payments') }}</h1>
             </div>
-            <div class="col-md-6 text-md-right">
-                @if ($filtersApplied)
-                    <span class="badge badge-inline badge-info mr-2">{{ translate('Filters applied') }}</span>
-                @endif
-                <a href="{{ route('credits.index') }}" class="btn btn-soft-primary mr-2">
-                    <i class="las la-arrow-left"></i> {{ translate('Credit') }}
-                </a>
-                <button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#creditPaymentFilterModal">
-                    <i class="las la-filter"></i> {{ translate('Open Filters') }}
+            <div class="crd-toolbar">
+                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#creditPaymentFilterModal">
+                    <i class="las la-filter"></i> <span>{{ translate('Filter') }}</span>
                 </button>
-                <a href="{{ route('credits.payments') }}" class="btn btn-danger">{{ translate('Reset') }}</a>
+                @if ($filtersApplied)
+                    <a href="{{ route('credits.payments') }}" class="btn btn-soft-danger">
+                        <i class="las la-times"></i> <span>{{ translate('Clear') }}</span>
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -30,22 +31,16 @@
             {{ translate('Credit payments are not ready yet. Run sqlupdates/credit_payments.sql on the database.') }}
         </div>
     @else
-        <div class="row gutters-10 mb-3">
-            <div class="col-md-6">
-                <div class="card mb-0">
-                    <div class="card-body py-3">
-                        <div class="text-muted fs-12">{{ translate('Credit payments received (completed, matching filters)') }}</div>
-                        <div class="h5 fw-700 mb-0 text-success">{{ single_price($totals['settle']) }}</div>
-                    </div>
-                </div>
+        <div class="crd-kpis mb-3">
+            <div class="crd-kpi" style="border-top-color: #1b7a3d;">
+                <span class="crd-kpi-label">{{ translate('Credit repaid') }}</span>
+                <span class="crd-kpi-value" style="color: #1b7a3d;">{{ single_price($totals['settle']) }}</span>
+                <span class="crd-kpi-sub">{{ $filtersApplied ? translate('Completed, matching filters') : translate('Completed, all time') }}</span>
             </div>
-            <div class="col-md-6">
-                <div class="card mb-0">
-                    <div class="card-body py-3">
-                        <div class="text-muted fs-12">{{ translate('Top ups received (completed, matching filters)') }}</div>
-                        <div class="h5 fw-700 mb-0 text-info">{{ single_price($totals['topup']) }}</div>
-                    </div>
-                </div>
+            <div class="crd-kpi">
+                <span class="crd-kpi-label">{{ translate('Top ups received') }}</span>
+                <span class="crd-kpi-value">{{ single_price($totals['topup']) }}</span>
+                <span class="crd-kpi-sub">{{ $filtersApplied ? translate('Completed, matching filters') : translate('Completed, all time') }}</span>
             </div>
         </div>
 
@@ -54,10 +49,10 @@
                 <table class="table aiz-table mb-0">
                     <thead>
                         <tr>
-                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'id', 'label' => '#'])
-                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'created_at', 'label' => translate('Date')])
+                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'id', 'label' => '#', 'breakpoints' => 'md'])
+                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'created_at', 'label' => translate('Date'), 'breakpoints' => 'sm'])
                             @include('backend.inc.sortable_th', $paymentSort + ['column' => 'customer', 'label' => translate('Customer')])
-                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'purpose', 'label' => translate('Type')])
+                            @include('backend.inc.sortable_th', $paymentSort + ['column' => 'purpose', 'label' => translate('Type'), 'breakpoints' => 'sm'])
                             @include('backend.inc.sortable_th', $paymentSort + ['column' => 'amount', 'label' => translate('Amount')])
                             @include('backend.inc.sortable_th', $paymentSort + ['column' => 'payment_method', 'label' => translate('Payment Method'), 'breakpoints' => 'md'])
                             <th data-breakpoints="lg">{{ translate('Reference') }}</th>
@@ -81,6 +76,10 @@
                                     @if ($payment->user)
                                         <a href="{{ route('customers.view', encrypt($payment->user->id)) }}" class="fw-600 text-reset">{{ $company ?: $payment->user->name }}</a>
                                         <div class="text-muted fs-12">{{ $payment->user->phone ?: $payment->user->email }}</div>
+                                        <div class="text-muted fs-12 d-md-none">
+                                            <span class="badge badge-inline {{ $purposeClass }}">{{ $payment->purposeLabel() }}</span>
+                                            <span class="text-nowrap">{{ optional($payment->created_at)->format('d M Y, H:i') }}</span>
+                                        </div>
                                     @else
                                         -
                                     @endif
