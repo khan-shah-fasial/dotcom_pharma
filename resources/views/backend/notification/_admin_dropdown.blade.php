@@ -10,3 +10,6 @@
 <div class="tab-pane" id="stock-notifications" role="tabpanel">
     <x-unread_notification :notifications="$stockNotifications" />
 </div>
+<div class="tab-pane" id="credit-notifications" role="tabpanel">
+    <x-unread_notification :notifications="$creditNotifications ?? collect()" />
+</div>

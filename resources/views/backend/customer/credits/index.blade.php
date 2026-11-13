@@ -22,6 +22,14 @@
                 @if ($filtersApplied)
                     <span class="badge badge-inline badge-info mr-2">{{ translate('Filters applied') }}</span>
                 @endif
+                @can('ban_customer')
+                    <button type="button" class="btn btn-primary mr-2 js-credit-account" data-mode="create">
+                        <i class="las la-plus"></i> {{ translate('Add credit account') }}
+                    </button>
+                @endcan
+                <a href="{{ route('credits.payments') }}" class="btn btn-soft-primary mr-2">
+                    <i class="las la-receipt"></i> {{ translate('Credit payments') }}
+                </a>
                 <button type="button" class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#creditFilterModal">
                     <i class="las la-filter"></i> {{ translate('Open Filters') }}
                 </button>
@@ -90,7 +98,34 @@
                             @endif
                             <td class="fw-600 text-nowrap">{{ single_price($availableCredit) }}</td>
                             <td class="fw-600 text-nowrap {{ $outstandingCredit > 0 ? 'text-danger' : '' }}">{{ single_price($outstandingCredit) }}</td>
-                            <td class="text-right">
+                            <td class="text-right text-nowrap">
+                                @can('ban_customer')
+                                    <button type="button" class="btn btn-soft-success btn-icon btn-circle btn-sm js-credit-account"
+                                        data-mode="edit"
+                                        data-user-id="{{ $account->id }}"
+                                        data-customer="{{ $company ?: $account->name }}"
+                                        data-status="{{ $account->creditIsActive() ? 'active' : 'deactive' }}"
+                                        data-limit="{{ (int) round((float) $account->credit_limit) }}"
+                                        data-days="{{ (int) $account->credit_days }}"
+                                        title="{{ translate('Edit credit') }}">
+                                        <i class="las la-edit"></i>
+                                    </button>
+                                    @if ($account->creditIsActive() || (float) $account->credit_limit > 0 || (int) $account->credit_days > 0)
+                                        <button type="button" class="btn btn-soft-danger btn-icon btn-circle btn-sm js-credit-remove"
+                                            data-action="{{ route('customers.credits.remove', $account->id) }}"
+                                            data-customer="{{ $company ?: $account->name }}"
+                                            data-outstanding="{{ single_price($outstandingCredit) }}"
+                                            data-owes="{{ $outstandingCredit > 0.009 ? 1 : 0 }}"
+                                            title="{{ translate('Remove credit') }}">
+                                            <i class="las la-trash"></i>
+                                        </button>
+                                    @endif
+                                @endcan
+                                <a class="btn btn-soft-info btn-icon btn-circle btn-sm"
+                                    href="{{ route('credits.payments', ['search' => $account->phone ?: $account->email]) }}"
+                                    title="{{ translate('Credit payments') }}">
+                                    <i class="las la-receipt"></i>
+                                </a>
                                 <a class="btn btn-soft-primary btn-icon btn-circle btn-sm"
                                     href="{{ route('customers.view', encrypt($account->id)) }}"
                                     title="{{ translate('View') }}">
@@ -164,13 +199,15 @@
                                 <td class="text-right">
                                     @can('ban_customer')
                                         @if ($use->status === \App\Models\CreditUse::STATUS_RESERVED)
-                                            <form method="POST" action="{{ route('credits.mark_paid', $use->id) }}" class="d-inline"
-                                                onsubmit="return confirm(@json(translate('Mark this credit as paid?')))">
-                                                @csrf
-                                                <button type="submit" class="btn btn-soft-success btn-icon btn-circle btn-sm" title="{{ translate('Mark paid') }}">
-                                                    <i class="las la-check"></i>
-                                                </button>
-                                            </form>
+                                            <button type="button" class="btn btn-soft-success btn-icon btn-circle btn-sm js-credit-markpaid"
+                                                data-action="{{ route('credits.mark_paid', $use->id) }}"
+                                                data-customer="{{ $company ?: optional($use->user)->name }}"
+                                                data-order="{{ optional($use->order)->code ?: ($use->order_id ?: '-') }}"
+                                                data-amount="{{ single_price($use->amount) }}"
+                                                data-raw="{{ round((float) $use->amount, 2) }}"
+                                                title="{{ translate('Record payment') }}">
+                                                <i class="las la-check"></i>
+                                            </button>
                                         @endif
                                     @endcan
                                 </td>
@@ -286,4 +323,5 @@
             </form>
         </div>
     </div>
+    @include('backend.customer.credits.partials.action_modals')
 @endsection

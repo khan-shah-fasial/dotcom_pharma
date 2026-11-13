@@ -22,7 +22,7 @@
                         <span class="mr-4">{{ translate('Top up balance') }}: <strong>{{ single_price($prepaidCredit) }}</strong></span>
                         <span>{{ translate('Available Credit') }}: <strong>{{ single_price($availableCredit) }}</strong></span>
                     </span>
-                    <span class="d-block fs-12 text-secondary mt-1">{{ translate('The top up balance is money already paid. It is used first and is not billed again. Credit from the limit is due after dispatch. Anything still left is paid now.') }}</span>
+                    <span class="d-block fs-12 text-secondary mt-1">{{ translate('Credit from your limit is used first and is due after dispatch. Then the top up balance (money already paid, not billed again). Anything still left is paid online now.') }}</span>
                 </span>
             </span>
         </label>

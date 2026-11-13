@@ -117,6 +117,10 @@ class RazorpayController extends Controller
                 } elseif ($paymentType == 'order_re_payment') {
                     return (new CheckoutController)->orderRePaymentDone($paymentData, $payment_detalis);
                 } elseif ($paymentType == 'wallet_payment') {
+                    if (is_array($paymentData) && !empty($paymentData['credit_payment_id'])) {
+                        // Credit payments check the amount Razorpay charged (paise), not the amount saved in the session.
+                        $paymentData['amount'] = round(((float) $response['amount']) / 100, 2);
+                    }
                     return (new WalletController)->wallet_payment_done($paymentData, $payment_detalis);
                 } elseif ($paymentType == 'customer_package_payment') {
                     return (new CustomerPackageController)->purchase_payment_done($paymentData, $payment_detalis);

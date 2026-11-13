@@ -82,7 +82,7 @@
             <div class="bg-light border text-center p-3 p-md-4 h-100 d-flex flex-column justify-content-center">
                 <div class="fs-14 fw-400 text-secondary">{{ translate('Top up balance') }}</div>
                 <div class="fs-16 fs-md-24 fw-700 text-dark my-1 text-nowrap">{{ single_price($prepaid ?? 0) }}</div>
-                <div class="fs-12 text-secondary">{{ translate('Used first at checkout') }}</div>
+                <div class="fs-12 text-secondary">{{ translate('Used after credit at checkout') }}</div>
             </div>
         </div>
 
@@ -115,7 +115,7 @@
         <div class="card-header border-bottom-0">
             <div>
                 <h5 class="mb-0 fs-20 fw-700 text-dark">{{ translate('Pay credit') }}</h5>
-                <p class="fs-13 text-secondary mb-0 mt-1">{{ translate('Paying an open credit clears it. Available credit goes back up, and an overdue block lifts when nothing overdue is left.') }}</p>
+                <p class="fs-13 text-secondary mb-0 mt-1">{{ translate('Pay all or part of your open credit. Whatever you pay is added back to your available credit; the oldest due is cleared first. An overdue block lifts when nothing overdue is left.') }}</p>
             </div>
         </div>
         <div class="card-body py-0">
@@ -176,11 +176,17 @@
 
                     @if ($canPay)
                         <div class="row align-items-end border-top pt-3 pb-4">
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-3 mb-3 mb-md-0">
                                 <div class="fs-13 text-secondary">{{ translate('Selected') }}</div>
                                 <div class="fs-20 fw-700 text-dark" id="credit-selected-total">{{ single_price($openUses->sum('amount')) }}</div>
                             </div>
-                            <div class="col-md-4 mb-3 mb-md-0">
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <label class="fs-13 text-secondary" for="credit-pay-amount">{{ translate('Amount to pay') }}</label>
+                                <input type="number" lang="en" step="0.01" min="1" class="form-control rounded-0" id="credit-pay-amount" name="amount"
+                                    value="{{ round((float) $openUses->sum('amount'), 2) }}" max="{{ round((float) $openUses->sum('amount'), 2) }}" required>
+                                <small class="text-secondary fs-11">{{ translate('Pay part now: what you pay is available to use again, the rest stays due.') }}</small>
+                            </div>
+                            <div class="col-md-3 mb-3 mb-md-0">
                                 <label class="fs-13 text-secondary" for="credit-pay-method">{{ translate('Payment Method') }}</label>
                                 <select class="form-control rounded-0" id="credit-pay-method" name="payment_option" required>
                                     @foreach ($paymentMethods as $paymentMethod)
@@ -188,9 +194,9 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4 text-md-right">
+                            <div class="col-md-3 text-md-right">
                                 <button type="submit" class="btn btn-primary rounded-0 fw-700 px-4" id="credit-pay-btn" style="background: #2b56a1 !important; border-color: #2b56a1;">
-                                    {{ translate('Pay selected credit') }}
+                                    {{ translate('Pay credit') }}
                                 </button>
                             </div>
                         </div>
@@ -237,9 +243,12 @@
                                 <td class="pl-0 text-secondary">{{ optional($payment->created_at)->format('d-m-Y H:i') }}</td>
                                 <td>
                                     <span class="{{ $pill }} {{ $payment->purpose === 'topup' ? 'badge-info' : 'badge-success' }}" style="{{ $pillStyle }}">{{ $payment->purposeLabel() }}</span>
+                                    @if ($payment->recordedByAdmin() && $payment->reference() !== '')
+                                        <div class="text-secondary fs-12 mt-1">{{ translate('Ref') }}: {{ $payment->reference() }}</div>
+                                    @endif
                                 </td>
-                                <td class="fw-700">{{ single_price($payment->amount) }}</td>
-                                <td class="text-right pr-0">{{ $payment->payment_method ? ucfirst(str_replace('_', ' ', translate($payment->payment_method))) : '-' }}</td>
+                                <td class="fw-700 {{ (float) $payment->amount < 0 ? 'text-danger' : '' }}">{{ single_price($payment->amount) }}</td>
+                                <td class="text-right pr-0">{{ $payment->methodLabel() }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -263,7 +272,7 @@
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body gry-bg px-3 pt-3">
-                        <p class="fs-13 text-secondary">{{ translate('Top up is money you pay now. It is used first at checkout and is not billed again. It does not change the wallet balance and does not pay an open credit.') }}</p>
+                        <p class="fs-13 text-secondary">{{ translate('Top up is money you pay now. At checkout it is used after your credit limit and is not billed again. It does not change the wallet balance and does not pay an open credit.') }}</p>
                         <form action="{{ route('customer.credit.topup') }}" method="POST">
                             @csrf
                             <div class="row">
@@ -316,8 +325,7 @@
                             <select class="form-control rounded-0" id="credit-filter-purpose" name="purpose">
                                 <option value="">{{ translate('All') }}</option>
                                 <option value="topup" @selected($filters['purpose'] === 'topup')>{{ translate('Top up') }}</option>
-                                <option value="settle" @selected($filters['purpose'] === 'settle')>{{ translate('Payment') }}</option>
-                            </select>
+                                <option value="settle" @selected($filters['purpose'] === 'settle')>{{ translate('Payment') }}</option>                            </select>
                         </div>
                         <div class="form-group">
                             <label for="credit-filter-method">{{ translate('Payment Method') }}</label>
@@ -386,6 +394,13 @@
                 var all = document.getElementById('credit-select-all');
                 if (total) {
                     total.textContent = money(sum);
+                }
+                var amount = document.getElementById('credit-pay-amount');
+                if (amount) {
+                    var rounded = Math.round(sum * 100) / 100;
+                    amount.max = rounded;
+                    amount.min = Math.min(1, rounded);
+                    amount.value = rounded;
                 }
                 if (button) {
                     button.disabled = picked === 0;

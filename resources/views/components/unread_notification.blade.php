@@ -104,6 +104,11 @@
                                 $notifyContent = str_replace('[[gift_name]]', $giftName, $notifyContent);
                                 $notifyContent = str_replace('[[status]]', $status, $notifyContent);
                             @endphp
+                        {{-- Credit Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\CreditNotification')
+                            @php
+                                $notifyContent = \App\Notifications\CreditNotification::fill($notifyContent, $notification->data);
+                            @endphp
                         @endif
                         <a href="{{ ($user_type == 'admin' || $user_type == 'staff') ?
                                     route('admin.notification.read-and-redirect', encrypt($notification->id)) :

@@ -57,6 +57,10 @@ class NotificationController extends Controller
                 ->where('type', 'App\Notifications\LowStockAdminNotification')
                 ->limit(20)
                 ->get(),
+            'creditNotifications' => $unreadNotifications()
+                ->where('type', 'App\Notifications\CreditNotification')
+                ->limit(20)
+                ->get(),
         ]);
     }
 
@@ -206,6 +210,17 @@ class NotificationController extends Controller
             else{
                 return redirect()->route('seller.dashboard');
             }
+        }
+
+        // Credit notification redirect (customer credit page, or the admin credit pages)
+        elseif($notification->type == 'App\Notifications\CreditNotification'){
+            $link = $notification->data['link'] ?? null;
+            if ($link && str_starts_with($link, url('/'))) {
+                return redirect()->to($link);
+            }
+            return $userType == 'customer'
+                ? redirect()->route('customer.credit.index')
+                : redirect()->route('credits.index');
         }
 
         // Custom notification redirect

@@ -138,6 +138,14 @@
                                 $notifyContent = str_replace('[[gift_name]]', $giftName, $notifyContent);
                                 $notifyContent = str_replace('[[status]]', $status, $notifyContent);
                             @endphp
+                        {{-- Credit Notifications --}}
+                        @elseif ($notification->type == 'App\Notifications\CreditNotification')
+                            @php
+                                $notifyContent = \App\Notifications\CreditNotification::fill($notifyContent, $notification->data);
+                                if (!empty($notification->data['link'])) {
+                                    $notifyContent = "<a href='" . e($notification->data['link']) . "'>" . $notifyContent . "</a>";
+                                }
+                            @endphp
                         @endif
                         <p class="mb-1 text-truncate-2">
                             {!! $notifyContent !!}

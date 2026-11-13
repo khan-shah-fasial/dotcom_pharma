@@ -1123,6 +1123,9 @@ body .translater_menu .select2-container {
                                                                             $notifyContent = str_replace('[[variant_count]]', $variantCount, $notifyContent);
                                                                             $notifyContent = str_replace('[[variant_names]]', implode(', ', $variantNames), $notifyContent);
                                                                         }
+                                                                        if ($notification->type == 'App\\Notifications\\CreditNotification') {
+                                                                            $notifyContent = \App\Notifications\CreditNotification::fill($notifyContent, $notification->data);
+                                                                        }
                                                                         if ($notification->type == 'App\\Notifications\\OrderNotification') {
                                                                             $orderCode = $notification->data['order_code'];
                                                                             $orderCode = "<span class='text-blue'>" . $orderCode . '</span>';

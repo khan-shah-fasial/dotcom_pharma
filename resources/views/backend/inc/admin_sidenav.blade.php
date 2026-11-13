@@ -900,6 +900,11 @@
                                     <span class="aiz-side-nav-text">{{ translate('Credit') }}</span>
                                 </a>
                             </li>
+                            <li class="aiz-side-nav-item">
+                                <a href="{{ route('credits.payments') }}" class="aiz-side-nav-link {{ areActiveRoutes(['credits.payments']) }}">
+                                    <span class="aiz-side-nav-text">{{ translate('Credit payments') }}</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 @endcan

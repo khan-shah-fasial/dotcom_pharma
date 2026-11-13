@@ -33,7 +33,7 @@ class CustomerController extends Controller
         $this->middleware(['permission:view_all_customers'])->only('index');
         $this->middleware(['permission:add_customer'])->only('create', 'createBusiness', 'storeBusiness');
         $this->middleware(['permission:login_as_customer'])->only('login');
-        $this->middleware(['permission:ban_customer'])->only('ban', 'update_credit');
+        $this->middleware(['permission:ban_customer'])->only('ban', 'update_credit', 'remove_credit');
         $this->middleware(['permission:delete_customer'])->only('destroy');
     }
 
@@ -1847,6 +1847,10 @@ class CustomerController extends Controller
             'credit_days'   => 'required|integer|min:0',
         ]);
         $validator->after(function ($validator) use ($request) {
+            $target = User::find($request->input('user_id'));
+            if ($target && $target->user_type !== 'customer') {
+                $validator->errors()->add('user_id', translate('Credit can only be given to a customer.'));
+            }
             if ($request->input('credit_status') === 'active' && (int) $request->input('credit_days') < 1) {
                 $validator->errors()->add('credit_days', translate('Number of days must be at least 1 when credit is active.'));
             }
@@ -1864,6 +1868,7 @@ class CustomerController extends Controller
         try {
             $user = User::findOrFail($validated['user_id']);
             $active = $validated['credit_status'] === 'active';
+            $before = \App\Services\CreditNotifier::accountSnapshot($user);
 
             DB::beginTransaction();
 
@@ -1876,6 +1881,9 @@ class CustomerController extends Controller
 
             DB::commit();
 
+            // Tells the customer only when status, limit or days really changed.
+            \App\Services\CreditNotifier::accountUpdated($user->fresh(), $before);
+
             flash(translate('Credit details updated successfully'))->success();
             return back();
         } catch (\Throwable $e) {
@@ -1887,6 +1895,36 @@ class CustomerController extends Controller
             flash(translate('Something went wrong: ' . $e->getMessage()))->error();
             return back()->withInput()->with('open_credit_modal', true);
         }
+    }
+
+    /**
+     * Removes a customer's credit account: credit off, limit 0, days 0.
+     * Refused while they still owe credit. Their top up balance is their money, so it is kept.
+     */
+    public function remove_credit($id)
+    {
+        $user = User::where('user_type', 'customer')->findOrFail((int) $id);
+
+        if (CreditUse::outstandingFor($user) > 0.009) {
+            flash(translate('This customer still owes credit. It must be paid before the credit account can be removed.'))->warning();
+            return back();
+        }
+
+        $before = \App\Services\CreditNotifier::accountSnapshot($user);
+
+        DB::transaction(function () use ($user) {
+            $user->update([
+                'credit_status' => $this->persistableCreditStatus(false),
+                'credit_limit' => 0,
+                'credit_days' => 0,
+            ]);
+            CreditUse::rememberAvailable($user->fresh());
+        });
+
+        \App\Services\CreditNotifier::accountUpdated($user->fresh(), $before);
+
+        flash(translate('Credit account removed.'))->success();
+        return back();
     }
 
     private function persistableCreditStatus(bool $active)

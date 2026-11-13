@@ -97,10 +97,39 @@
                                         <p class="mb-0">{{ single_price(\App\Models\CreditUse::prepaidFor($user2)) }}</p>
                                     </div>
                                 @endif
-                                <div class="col-md-4 mb-3 d-flex align-items-end">
+                                <div class="col-md-12 mb-3 d-flex flex-wrap align-items-end" style="gap: 8px;">
                                     <a href="{{ route('credits.index', ['search' => $user2->phone ?: $user2->email]) }}" class="btn btn-soft-primary btn-sm">
                                         {{ translate('View credit on orders') }}
                                     </a>
+                                    @if (\App\Models\CreditPayment::tableReady())
+                                        <a href="{{ route('credits.payments', ['search' => $user2->phone ?: $user2->email]) }}" class="btn btn-soft-info btn-sm">
+                                            {{ translate('Credit payments') }}
+                                        </a>
+                                    @endif
+                                    @can('ban_customer')
+                                        @php
+                                            $profileOwes = \App\Models\CreditUse::outstandingFor($user2);
+                                            $profileName = optional($user2->details)->company_name ?: $user2->name;
+                                        @endphp
+                                        <button type="button" class="btn btn-soft-success btn-sm js-credit-account"
+                                            data-mode="edit"
+                                            data-user-id="{{ $user2->id }}"
+                                            data-customer="{{ $profileName }}"
+                                            data-status="{{ $user2->creditIsActive() ? 'active' : 'deactive' }}"
+                                            data-limit="{{ (int) round((float) $user2->credit_limit) }}"
+                                            data-days="{{ (int) $user2->credit_days }}">
+                                            {{ translate('Edit credit') }}
+                                        </button>
+                                        @if ($user2->creditIsActive() || (float) $user2->credit_limit > 0 || (int) $user2->credit_days > 0)
+                                            <button type="button" class="btn btn-soft-danger btn-sm js-credit-remove"
+                                                data-action="{{ route('customers.credits.remove', $user2->id) }}"
+                                                data-customer="{{ $profileName }}"
+                                                data-outstanding="{{ single_price($profileOwes) }}"
+                                                data-owes="{{ $profileOwes > 0.009 ? 1 : 0 }}">
+                                                {{ translate('Remove credit') }}
+                                            </button>
+                                        @endif
+                                    @endcan
                                 </div>
                             </div>
                             @if (\App\Models\CreditUse::blocksPurchase($user2))
@@ -1075,6 +1104,9 @@
 
     @include('components.location-info', ['data' => getStoredIPLocation('users', $user->user_id ?? $user2->id)])
 
+    @if ($user2 ?? null)
+        @include('backend.customer.credits.partials.action_modals')
+    @endif
 @endsection
 
 @section('script')

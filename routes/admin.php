@@ -365,10 +365,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::any('/customers_approval', 'approval')->name('customers.approval');
 
         Route::post('/customers/credit/update','update_credit')->name('customers.credits.update');
+        Route::post('/customers/credit/remove/{id}','remove_credit')->name('customers.credits.remove');
     });
 
     Route::get('/credits', [CreditController::class, 'index'])->name('credits.index');
+    Route::get('/credits/payments', [CreditController::class, 'payments'])->name('credits.payments');
     Route::post('/credits/{creditUse}/paid', [CreditController::class, 'markPaid'])->name('credits.mark_paid');
+    Route::get('/credits/customer-search', [CreditController::class, 'customerSearch'])->name('credits.customer_search');
 
     // Company Master
     Route::get('companies/location-options', [CompanyController::class, 'locationOptions'])->name('companies.location.options');

@@ -181,6 +181,9 @@ class DocumentType
             return $custom;
         }
 
+        // Older orders have no document type saved (null); show a dash instead of failing.
+        $type = trim((string) $type);
+
         return self::TYPES[$type] ?? ($type !== '' ? $type : '—');
     }
 

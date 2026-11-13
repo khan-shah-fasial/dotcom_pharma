@@ -103,6 +103,13 @@
                                                 $notifyContent = str_replace('[[gift_name]]', $giftName, $notifyContent);
                                                 $notifyContent = str_replace('[[status]]', $status, $notifyContent);
                                             @endphp
+                                        @elseif($notification->type == 'App\Notifications\CreditNotification')
+                                            @php
+                                                $notifyContent = \App\Notifications\CreditNotification::fill($notifyContent, $notification->data);
+                                                if (!empty($notification->data['link'])) {
+                                                    $notifyContent = "<a href='" . e($notification->data['link']) . "'>" . $notifyContent . "</a>";
+                                                }
+                                            @endphp
                                         @elseif($notification->type == 'App\Notifications\ProductRestockNotification')
                                             {{-- already handled above; keep rendering --}}
                                         @endif

@@ -158,6 +158,10 @@
                                         <a class="nav-link text-dark" data-toggle="tab" data-type="stock" href="javascript:void(0);"
                                             data-target="#stock-notifications" role="tab" id="stock-tab">{{ translate('Stock') }}</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" data-toggle="tab" data-type="credit" href="javascript:void(0);"
+                                            data-target="#credit-notifications" role="tab" id="credit-tab">{{ translate('Credit') }}</a>
+                                    </li>
                                 </ul>
                                 <div class="tab-content c-scrollbar-light overflow-auto js-admin-notifications-content" style="height: 75vh; max-height: 400px; overflow-y: auto;">
                                     <div class="py-4 text-center fs-14 text-muted">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CreditPayment;
 use App\Models\CreditUse;
 use App\Models\User;
+use App\Services\CreditNotifier;
 use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ class CustomerCreditController extends Controller
         $paymentsReady = CreditPayment::tableReady();
 
         $filters = [
-            'purpose' => in_array($request->input('purpose'), [CreditPayment::PURPOSE_TOPUP, CreditPayment::PURPOSE_SETTLE], true) ? $request->input('purpose') : '',
+            'purpose' => in_array($request->input('purpose'), CreditPayment::purposes(), true) ? $request->input('purpose') : '',
             'method' => trim((string) $request->input('method', '')),
             'date_from' => $this->dateOrEmpty($request->input('date_from')),
             'date_to' => $this->dateOrEmpty($request->input('date_to')),
@@ -156,6 +157,7 @@ class CustomerCreditController extends Controller
             'credit_use_ids' => ['required', 'array', 'min:1'],
             'credit_use_ids.*' => ['integer'],
             'payment_option' => ['required', 'string'],
+            'amount' => ['nullable', 'numeric', 'min:1', 'max:99999999.99'],
         ]);
 
         if ($denied = $this->unknownPaymentMethod($request)) {
@@ -176,9 +178,16 @@ class CustomerCreditController extends Controller
             return back();
         }
 
-        $amount = round((float) $uses->sum('amount'), 2);
-        if ($amount <= 0) {
+        $owed = round((float) $uses->sum('amount'), 2);
+        if ($owed <= 0) {
             flash(translate('Choose an open credit to pay.'))->warning();
+            return back();
+        }
+
+        // A part payment is allowed; it is applied to the oldest due of the chosen credit first.
+        $amount = $request->filled('amount') ? round((float) $request->input('amount'), 2) : $owed;
+        if ($amount - $owed > 0.009) {
+            flash(translate('The amount is more than the selected credit.'))->warning();
             return back();
         }
 
@@ -267,6 +276,15 @@ class CustomerCreditController extends Controller
             $payment->save();
             $this->forgetPaymentSession();
 
+            // Notify once the payment is saved, so a slow mail server does not hold the row locks.
+            DB::afterCommit(function () use ($payment, $user) {
+                if ($payment->purpose === CreditPayment::PURPOSE_TOPUP) {
+                    CreditNotifier::topupReceived($user, $payment);
+                } else {
+                    CreditNotifier::paymentReceived($user, (float) $payment->amount, $payment, true);
+                }
+            });
+
             flash($payment->purpose === CreditPayment::PURPOSE_TOPUP
                 ? translate('Credit topped up.')
                 : translate('Credit paid.'))->success();
@@ -322,24 +340,20 @@ class CustomerCreditController extends Controller
             ->whereIn('id', $ids)
             ->lockForUpdate()
             ->get();
-        if ($uses->count() !== $ids->count()) {
+        if ($uses->isEmpty()) {
             return false;
         }
 
-        $sum = round((float) $uses->sum('amount'), 2);
-        if (abs($sum - (float) $payment->amount) > 0.009) {
+        // The chosen credit may have been part paid by admin meanwhile; whatever is still
+        // owed on it must cover this payment, or the money is not matched.
+        $owed = round((float) $uses->sum('amount'), 2);
+        if ((float) $payment->amount - $owed > 0.009) {
             return false;
         }
 
-        foreach ($uses as $use) {
-            $use->status = CreditUse::STATUS_PAID;
-            $use->released_at = now();
-            $use->save();
-        }
+        $applied = CreditUse::applyPayment($user, $uses, (float) $payment->amount);
 
-        CreditUse::rememberAvailable($user->fresh());
-
-        return true;
+        return abs($applied - (float) $payment->amount) <= 0.009;
     }
 
     protected function paymentsNotReady()

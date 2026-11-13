@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CreditPayment;
 use App\Models\CreditUse;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\CreditNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -14,21 +16,225 @@ class CreditController extends Controller
 
     protected const USE_SORTS = ['id', 'customer', 'order', 'amount', 'credit_days', 'started_on', 'due_on', 'status', 'kind', 'created_at'];
 
+    protected const PAYMENT_SORTS = ['id', 'customer', 'purpose', 'amount', 'payment_method', 'status', 'created_at'];
+
     public function __construct()
     {
-        $this->middleware(['permission:view_all_customers'])->only('index');
+        $this->middleware(['permission:view_all_customers'])->only('index', 'payments', 'customerSearch');
         $this->middleware(['permission:ban_customer'])->only('markPaid');
     }
 
-    public function markPaid(CreditUse $creditUse)
+    public function markPaid(Request $request, CreditUse $creditUse)
     {
-        if (!CreditUse::markPaid($creditUse)) {
+        $request->validate([
+            'payment_method' => ['nullable', 'string', 'in:' . implode(',', array_keys(CreditPayment::offlineMethods()))],
+            'reference' => ['nullable', 'string', 'max:100'],
+            'note' => ['nullable', 'string', 'max:500'],
+            // Left empty, the whole open amount is paid. Less than that is a part payment.
+            'amount' => ['nullable', 'numeric', 'min:0.01', 'max:99999999.99'],
+        ]);
+
+        $payment = null;
+        $paid = 0.0;
+        $remaining = 0.0;
+        $result = DB::transaction(function () use ($request, $creditUse, &$payment, &$paid, &$remaining) {
+            $owner = User::query()->whereKey($creditUse->user_id)->lockForUpdate()->first();
+            $locked = CreditUse::query()->whereKey($creditUse->id)->lockForUpdate()->first();
+            if (!$owner || !$locked || $locked->status !== CreditUse::STATUS_RESERVED) {
+                return 'cleared';
+            }
+
+            $owed = round((float) $locked->amount, 2);
+            $amount = $request->filled('amount') ? round((float) $request->input('amount'), 2) : $owed;
+            if ($amount - $owed > 0.009) {
+                return 'too_much';
+            }
+
+            $paid = CreditUse::applyPayment($owner, [$locked->id], $amount);
+            if ($paid <= 0) {
+                return 'cleared';
+            }
+            $remaining = round($owed - $paid, 2);
+
+            // Keep a record of the money received, so it shows in credit payments for admin and customer.
+            if (CreditPayment::tableReady()) {
+                $payment = CreditPayment::query()->create([
+                    'user_id' => $creditUse->user_id,
+                    'purpose' => CreditPayment::PURPOSE_SETTLE,
+                    'amount' => $paid,
+                    'payment_method' => $request->input('payment_method') ?: 'other',
+                    'payment_details' => CreditPayment::adminDetails($request->input('reference'), $request->input('note')),
+                    'credit_use_ids' => (string) $creditUse->id,
+                    'status' => CreditPayment::STATUS_COMPLETED,
+                ]);
+            }
+
+            return 'ok';
+        });
+
+        if ($result === 'too_much') {
+            flash(translate('The amount is more than what is owed on this credit.'))->warning();
+            return back();
+        }
+
+        if ($result !== 'ok') {
             flash(translate('This credit is already cleared.'))->warning();
             return back();
         }
 
-        flash(translate('Credit marked as paid.'))->success();
+        if ($creditUse->user) {
+            CreditNotifier::paymentReceived($creditUse->user, $paid, $payment, false);
+        }
+
+        flash($remaining > 0.009
+            ? translate('Part payment recorded. Still owed') . ': ' . single_price($remaining)
+            : translate('Credit marked as paid.'))->success();
         return back();
+    }
+
+    /**
+     * Customer lookup for "Add credit account". Returns up to 20 customers with their current credit.
+     */
+    public function customerSearch(Request $request)
+    {
+        $term = trim((string) $request->input('q', ''));
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $like = '%' . $term . '%';
+        $customers = User::query()
+            ->with('details')
+            ->where('user_type', 'customer')
+            ->whereNotNull('step')
+            ->where(function ($query) use ($like) {
+                $query->where('name', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('phone', 'like', $like)
+                    ->orWhereHas('details', function ($details) use ($like) {
+                        $details->where('company_name', 'like', $like);
+                    });
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        return response()->json($customers->map(function (User $user) {
+            return [
+                'id' => $user->id,
+                'name' => optional($user->details)->company_name ?: $user->name,
+                'contact' => $user->phone ?: $user->email,
+                'status' => $user->creditIsActive() ? 'active' : 'deactive',
+                'limit' => (int) round((float) ($user->credit_limit ?? 0)),
+                'days' => (int) ($user->credit_days ?? 0),
+                'has_credit' => $user->creditIsActive() || (float) $user->credit_limit > 0 || (int) $user->credit_days > 0,
+            ];
+        })->values());
+    }
+
+    public function payments(Request $request)
+    {
+        $tableReady = CreditPayment::tableReady();
+
+        $filters = [
+            'search' => trim((string) $request->input('search', '')),
+            'purpose' => in_array($request->input('purpose'), CreditPayment::purposes(), true) ? $request->input('purpose') : '',
+            'status' => in_array($request->input('status'), CreditPayment::statuses(), true) ? $request->input('status') : '',
+            'method' => trim((string) $request->input('method', '')),
+            'source' => in_array($request->input('source'), ['online', 'admin'], true) ? $request->input('source') : '',
+            'date_from' => $this->dateOrEmpty($request->input('date_from')),
+            'date_to' => $this->dateOrEmpty($request->input('date_to')),
+        ];
+        $filtersApplied = collect($filters)->contains(function ($value) {
+            return $value !== '';
+        });
+
+        $sortBy = in_array($request->input('sort_by'), self::PAYMENT_SORTS, true) ? $request->input('sort_by') : 'id';
+        $sortDir = strtolower((string) $request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $payments = null;
+        $methods = collect();
+        $totals = ['settle' => 0.0, 'topup' => 0.0];
+        if ($tableReady) {
+            $query = $this->paymentsQuery($filters);
+
+            $completed = (clone $query)->where('status', CreditPayment::STATUS_COMPLETED);
+            $totals['settle'] = round((float) (clone $completed)->where('purpose', CreditPayment::PURPOSE_SETTLE)->sum('amount'), 2);
+            $totals['topup'] = round((float) (clone $completed)->where('purpose', CreditPayment::PURPOSE_TOPUP)->sum('amount'), 2);
+
+            if ($sortBy === 'customer') {
+                $query->orderBy(
+                    User::query()->select('name')->whereColumn('users.id', 'credit_payments.user_id')->limit(1),
+                    $sortDir
+                );
+            } else {
+                $query->orderBy('credit_payments.' . $sortBy, $sortDir);
+            }
+            if ($sortBy !== 'id') {
+                $query->orderBy('credit_payments.id', 'desc');
+            }
+
+            $payments = $query->with('user.details')->paginate(20)->withQueryString();
+            $methods = CreditPayment::query()
+                ->whereNotNull('payment_method')
+                ->distinct()
+                ->orderBy('payment_method')
+                ->pluck('payment_method');
+        }
+
+        return view('backend.customer.credits.payments', compact(
+            'tableReady',
+            'payments',
+            'methods',
+            'totals',
+            'filters',
+            'filtersApplied',
+            'sortBy',
+            'sortDir'
+        ));
+    }
+
+    protected function paymentsQuery(array $filters)
+    {
+        $query = CreditPayment::query()->select('credit_payments.*');
+
+        if ($filters['search'] !== '') {
+            $like = '%' . $filters['search'] . '%';
+            $query->where(function ($query) use ($like) {
+                $query->whereHas('user', function ($user) use ($like) {
+                    $user->where('name', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('phone', 'like', $like)
+                        ->orWhereHas('details', function ($details) use ($like) {
+                            $details->where('company_name', 'like', $like);
+                        });
+                })->orWhere('payment_details', 'like', $like);
+            });
+        }
+
+        foreach (['purpose' => 'purpose', 'status' => 'status', 'method' => 'payment_method'] as $key => $column) {
+            if ($filters[$key] !== '') {
+                $query->where($column, $filters[$key]);
+            }
+        }
+
+        if ($filters['source'] === 'admin') {
+            $query->where('payment_details', 'like', '%"source":"admin"%');
+        } elseif ($filters['source'] === 'online') {
+            $query->where(function ($query) {
+                $query->whereNull('payment_details')
+                    ->orWhere('payment_details', 'not like', '%"source":"admin"%');
+            });
+        }
+
+        if ($filters['date_from'] !== '') {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if ($filters['date_to'] !== '') {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query;
     }
 
     public function index(Request $request)

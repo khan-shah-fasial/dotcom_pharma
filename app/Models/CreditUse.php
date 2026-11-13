@@ -317,25 +317,7 @@ class CreditUse extends Model
                     continue;
                 }
 
-                if ($hasKind && $prepaidLeft > 0) {
-                    $slice = round(min($prepaidLeft, $left), 2);
-                    if ($slice > 0) {
-                        self::query()->create([
-                            'user_id' => $locked->id,
-                            'combined_order_id' => $combined->id,
-                            'order_id' => $order->id,
-                            'amount' => $slice,
-                            'credit_days' => 0,
-                            'status' => self::STATUS_PAID,
-                            'kind' => self::KIND_PREPAID,
-                        ]);
-                        $prepaidLeft = round($prepaidLeft - $slice, 2);
-                        $prepaidUsed = round($prepaidUsed + $slice, 2);
-                        $left = round($left - $slice, 2);
-                        $applied = round($applied + $slice, 2);
-                    }
-                }
-
+                // 1. Credit from the limit is used first.
                 if ($facilityLeft > 0 && $left > 0) {
                     $slice = round(min($facilityLeft, $left), 2);
                     $row = [
@@ -353,6 +335,26 @@ class CreditUse extends Model
                     $facilityLeft = round($facilityLeft - $slice, 2);
                     $left = round($left - $slice, 2);
                     $applied = round($applied + $slice, 2);
+                }
+
+                // 2. Then the top up balance. 3. Anything still left is paid online.
+                if ($hasKind && $prepaidLeft > 0 && $left > 0) {
+                    $slice = round(min($prepaidLeft, $left), 2);
+                    if ($slice > 0) {
+                        self::query()->create([
+                            'user_id' => $locked->id,
+                            'combined_order_id' => $combined->id,
+                            'order_id' => $order->id,
+                            'amount' => $slice,
+                            'credit_days' => 0,
+                            'status' => self::STATUS_PAID,
+                            'kind' => self::KIND_PREPAID,
+                        ]);
+                        $prepaidLeft = round($prepaidLeft - $slice, 2);
+                        $prepaidUsed = round($prepaidUsed + $slice, 2);
+                        $left = round($left - $slice, 2);
+                        $applied = round($applied + $slice, 2);
+                    }
                 }
 
                 if ($left <= 0.009) {
@@ -431,6 +433,108 @@ class CreditUse extends Model
         });
     }
 
+    /**
+     * Applies a repayment to open limit credit, oldest due first. A credit paid in full is
+     * marked paid; a part payment splits the row: the paid part becomes its own paid row and
+     * the reserved row keeps only what is still owed. Outstanding is the sum of reserved rows,
+     * so whatever is paid goes straight back into the available credit.
+     *
+     * $uses limits it to those credit rows (ids or models); empty means all open credit.
+     * Call inside a transaction. Returns the amount applied, never more than what is owed.
+     */
+    public static function applyPayment(User $owner, $uses, float $amount): float
+    {
+        $left = round($amount, 2);
+        if ($left <= 0 || !self::tableReady()) {
+            return 0.0;
+        }
+
+        $ids = collect($uses)->map(function ($use) {
+            return $use instanceof self ? (int) $use->id : (int) $use;
+        })->filter()->unique()->values();
+
+        $query = self::query()
+            ->where('user_id', $owner->id)
+            ->where('status', self::STATUS_RESERVED);
+        if ($ids->isNotEmpty()) {
+            $query->whereIn('id', $ids);
+        }
+
+        $open = $query
+            ->orderByRaw('due_on IS NULL')
+            ->orderBy('due_on')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        $applied = 0.0;
+        foreach ($open as $use) {
+            if ($left <= 0.009) {
+                break;
+            }
+
+            $owed = round((float) $use->amount, 2);
+            $pay = round(min($owed, $left), 2);
+            if ($pay <= 0) {
+                continue;
+            }
+
+            if ($owed - $pay <= 0.009) {
+                $use->status = self::STATUS_PAID;
+                $use->released_at = now();
+                $use->save();
+            } else {
+                $paidPart = $use->replicate();
+                $paidPart->amount = $pay;
+                $paidPart->status = self::STATUS_PAID;
+                $paidPart->released_at = now();
+                $paidPart->save();
+
+                $use->amount = round($owed - $pay, 2);
+                $use->save();
+            }
+
+            $left = round($left - $pay, 2);
+            $applied = round($applied + $pay, 2);
+        }
+
+        self::rememberAvailable($owner->fresh());
+
+        return $applied;
+    }
+
+    /**
+     * Limit credit taken on this row's order, paid parts included, so a reminder can say
+     * "you used N on order X" after a part payment.
+     */
+    public function usedOnOrder(): float
+    {
+        if (!$this->order_id) {
+            return round((float) $this->amount, 2);
+        }
+
+        $query = self::query()
+            ->where('user_id', $this->user_id)
+            ->where('order_id', $this->order_id)
+            ->whereIn('status', [self::STATUS_RESERVED, self::STATUS_PAID]);
+        if (self::kindColumnReady()) {
+            $query->where(function ($inner) {
+                $inner->whereNull('kind')->orWhere('kind', self::KIND_FACILITY);
+            });
+        }
+
+        return round((float) $query->sum('amount'), 2);
+    }
+
+    public function daysLeft(): ?int
+    {
+        if (!$this->due_on) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($this->due_on->copy()->startOfDay(), false);
+    }
+
     public static function startOnDispatch(Order $order): void
     {
         if (!self::tableReady() || !$order->id) {
@@ -456,6 +560,24 @@ class CreditUse extends Model
             $use->started_on = $started->copy();
             $use->due_on = $started->copy()->addDays(max(0, (int) $use->credit_days));
             $use->save();
+        }
+
+        // Sent after the order update is saved; runs at once when there is no open transaction.
+        DB::afterCommit(function () use ($uses) {
+            foreach ($uses as $use) {
+                \App\Services\CreditNotifier::dueStarted($use);
+            }
+        });
+    }
+
+    public static function remindersReady(): bool
+    {
+        try {
+            return self::tableReady()
+                && Schema::hasColumn('credit_uses', 'due_reminder_sent_at')
+                && Schema::hasColumn('credit_uses', 'overdue_reminder_sent_at');
+        } catch (\Throwable $e) {
+            return false;
         }
     }
 

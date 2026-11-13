@@ -28,6 +28,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('forex:refresh-countries')
             ->dailyAt('01:00')
             ->withoutOverlapping();
+
+        // Credit due-soon / overdue reminders and cleanup of abandoned credit payments.
+        $schedule->command('credit:daily')
+            ->dailyAt('09:00')
+            ->withoutOverlapping();
     }
 
     /**
