@@ -46,8 +46,19 @@ class CheckoutController extends Controller
         }
         $selectedShippingSlug    = get_shipping_method_slug_by_id($selectedShippingMethodId) ?? 'shipway'; // fallback
 
+        // Admin can turn off auto booking and create AWBs from the order page instead.
+        $autoCreate = get_setting('courier_auto_create_shipment');
+        if ($autoCreate !== null && $autoCreate !== '' && (string) $autoCreate === '0') {
+            Session::forget('shipping_method_id');
+            return;
+        }
+
         foreach ($combined_order->orders as $order) {
             if ($order->shipping_choice !== 'courier') {
+                continue;
+            }
+            if (!$this->orderReadyForShipment($order)) {
+                // Online payment not confirmed yet: no AWB until it is paid (admin can book it later).
                 continue;
             }
             $shipmentResolver->createShipment($selectedShippingSlug, $order, [
@@ -59,6 +70,16 @@ class CheckoutController extends Controller
             ]);
         }
         Session::forget('shipping_method_id');
+    }
+
+    private function orderReadyForShipment($order): bool
+    {
+        if ($order->payment_status === 'paid') {
+            return true;
+        }
+
+        // COD collects on delivery; credit orders are approved against the customer's credit limit.
+        return in_array((string) $order->payment_type, ['cash_on_delivery', 'credit'], true);
     }
 
     public function index(Request $request)

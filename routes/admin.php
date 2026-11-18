@@ -552,6 +552,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         //Shipping Configuration
         Route::get('/shipping_configuration', 'shipping_configuration')->name('shipping_configuration.index');
         Route::post('/shipping_configuration/update', 'shipping_configuration_update')->name('shipping_configuration.update');
+        Route::get('/courier-settings', 'courier_settings')->name('courier_settings.index');
 
         // Order Configuration
         Route::get('/order-configuration', 'order_configuration')->name('order_configuration.index');
@@ -1014,4 +1015,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
     Route::get('/admin-permissions', [RoleController::class, 'create_admin_permissions']);
 
     Route::get('/pending-in-carts', [MarketingController::class, 'list_user_and_cart_details'])->name('list_user_and_cart');
+
+    // Courier shipment actions (label, tracking, cancel, pickup)
+    Route::controller(\App\Http\Controllers\Admin\CourierShipmentController::class)->group(function () {
+        Route::get('/orders/{order}/shipment/label', 'label')->name('courier_shipment.label');
+        Route::post('/orders/{order}/shipment/track', 'track')->name('courier_shipment.track');
+        Route::post('/orders/{order}/shipment/cancel', 'cancel')->name('courier_shipment.cancel');
+        Route::post('/courier-pickup/{provider}', 'pickup')->name('courier_shipment.pickup');
+    });
 });

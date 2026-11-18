@@ -1978,6 +1978,13 @@
                                                 </a>
                                             </li>
                                         @endcan
+                                        @can('shipping_configuration')
+                                            <li class="aiz-side-nav-item">
+                                                <a href="{{route('courier_settings.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['courier_settings.index'])}}">
+                                                    <span class="aiz-side-nav-text">{{translate('Courier APIs')}}</span>
+                                                </a>
+                                            </li>
+                                        @endcan
                                         @can('shipping_country_setting')
                                             <li class="aiz-side-nav-item">
                                                 <a href="{{route('countries.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['countries.index','countries.edit','countries.update'])}}">

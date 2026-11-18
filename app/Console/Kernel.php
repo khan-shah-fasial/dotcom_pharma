@@ -33,6 +33,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('credit:daily')
             ->dailyAt('09:00')
             ->withoutOverlapping();
+
+        // Courier tracking status for open shipments (Delhivery today; others as they add track()).
+        $schedule->command('couriers:sync-tracking')
+            ->hourly()
+            ->withoutOverlapping();
     }
 
     /**

@@ -23,6 +23,7 @@ use App\Models\ProductBatch;
 use App\Models\BookedTo;
 use App\Models\LocalDeliveryPartner;
 use App\Models\ShippingMethod;
+use App\Support\ShipmentPackage;
 use App\Models\Staff;
 use App\Models\Transport;
 use Auth;
@@ -889,24 +890,23 @@ class OrderController extends Controller
                     : (float) $existingOrder->height_cm;
 
                 if ($weight <= 0 || $length <= 0 || $width <= 0 || $height <= 0) {
-                    $weight = 0.0;
-                    $length = 0.0;
-                    $width = 0.0;
-                    $height = 0.0;
+                    $lines = [];
                     foreach ($existingOrder->orderDetails as $detail) {
                         $product = $detail->product;
                         if (!$product || (bool) ($detail->is_scheme ?? false)) {
                             continue;
                         }
                         $stock = $product->stocks->firstWhere('variant', $detail->variation);
-                        $quantity = max(1, (int) $detail->quantity);
-                        $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
-                        $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
-                        $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
-                        $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+                        $lines[] = ShipmentPackage::line($stock, $product, max(1, (int) $detail->quantity));
                     }
+                    $estimated = $lines ? ShipmentPackage::fromLines($lines) : null;
+                    $weight = $weight > 0 ? $weight : (float) ($estimated['total_physical_weight'] ?? 0);
+                    $length = (float) ($estimated['box_length'] ?? 0);
+                    $width = (float) ($estimated['box_breadth'] ?? 0);
+                    $height = (float) ($estimated['box_height'] ?? 0);
                 }
             } else {
+                $lines = [];
                 foreach ((array) $request->input('items', []) as $item) {
                     $product = Product::find($item['product_id'] ?? null);
                     if (!$product) {
@@ -916,11 +916,14 @@ class OrderController extends Controller
                     $stock = !empty($item['stock_id'])
                         ? $product->stocks()->where('id', $item['stock_id'])->first()
                         : null;
-                    $quantity = max(1, (int) ($item['quantity'] ?? 1));
-                    $weight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $quantity;
-                    $length += (float) ($stock->length ?? $product->length ?? 10) * $quantity;
-                    $width += (float) ($stock->width ?? $product->width ?? 10) * $quantity;
-                    $height += (float) ($stock->height ?? $product->height ?? 10) * $quantity;
+                    $lines[] = ShipmentPackage::line($stock, $product, max(1, (int) ($item['quantity'] ?? 1)));
+                }
+                if ($lines) {
+                    $estimated = ShipmentPackage::fromLines($lines);
+                    $weight = (float) $estimated['total_physical_weight'];
+                    $length = (float) $estimated['box_length'];
+                    $width = (float) $estimated['box_breadth'];
+                    $height = (float) $estimated['box_height'];
                 }
             }
 
@@ -930,15 +933,7 @@ class OrderController extends Controller
                 ]);
             }
 
-            $volumetricWeight = (max(10, $length) * max(10, $width) * max(10, $height)) / 5000;
-            $package = [
-                'total_physical_weight' => number_format($weight, 2, '.', ''),
-                'box_length' => number_format(max(10, $length), 2, '.', ''),
-                'box_breadth' => number_format(max(10, $width), 2, '.', ''),
-                'box_height' => number_format(max(10, $height), 2, '.', ''),
-                'volumetric_weight' => number_format($volumetricWeight, 2, '.', ''),
-                'charged_weight' => number_format(max($weight, $volumetricWeight), 2, '.', ''),
-            ];
+            $package = ShipmentPackage::format($weight, $length, $width, $height);
 
             $rateRequest = Request::create('/', 'GET', [
                 'provider' => $method->slug,
@@ -2231,116 +2226,8 @@ class OrderController extends Controller
     public function update_delivery_status(Request $request)
     {
         $order = Order::findOrFail($request->order_id);
-        $order->delivery_viewed = '0';
-        $order->delivery_status = $request->status;
-        $order->save();
 
-        // Limit credit and prepaid top up both go back to the customer's credit on cancel, so neither is refunded to the wallet.
-        $creditOnOrder = \App\Models\CreditUse::appliedTo('order_id', (int) $order->id)['total'];
-
-        if ($request->status == 'cancelled') {
-            \App\Models\CreditUse::releaseForOrder($order);
-        } else {
-            \App\Models\CreditUse::startOnDispatch($order);
-        }
-
-        if ($request->status == 'cancelled' && $order->payment_type == 'wallet') {
-            $user = User::where('id', $order->user_id)->first();
-            $user->balance += max(0, (float) $order->grand_total - $creditOnOrder);
-            $user->save();
-        }
-
-        if ($request->status == 'cancelled') {
-            release_referral_discount_lock_on_order_cancel($order);
-        }
-
-        // If the order is cancelled and the seller commission is calculated, deduct seller earning
-        if($request->status == 'cancelled' && $order->user->user_type == 'seller' && $order->payment_status == 'paid' && $order->commission_calculated == 1){
-            $sellerEarning = $order->commissionHistory->seller_earning;
-            $shop = $order->shop;
-            $shop->admin_to_pay -= $sellerEarning;
-            $shop->save();
-        }
-
-        if (Auth::user()->user_type == 'seller') {
-            foreach ($order->orderDetails->where('seller_id', Auth::user()->id) as $key => $orderDetail) {
-                $orderDetail->delivery_status = $request->status;
-                $orderDetail->save();
-
-                if ($request->status == 'cancelled') {
-                    product_restock($orderDetail);
-                }
-            }
-        } else {
-            foreach ($order->orderDetails as $key => $orderDetail) {
-
-                $orderDetail->delivery_status = $request->status;
-                $orderDetail->save();
-
-                if ($request->status == 'cancelled') {
-                    product_restock($orderDetail);
-                }
-
-                if (addon_is_activated('affiliate_system')) {
-                    if (($request->status == 'delivered' || $request->status == 'cancelled') &&
-                        $orderDetail->product_referral_code
-                    ) {
-
-                        $no_of_delivered = 0;
-                        $no_of_canceled = 0;
-
-                        if ($request->status == 'delivered') {
-                            $no_of_delivered = $orderDetail->quantity;
-                        }
-                        if ($request->status == 'cancelled') {
-                            $no_of_canceled = $orderDetail->quantity;
-                        }
-
-                        $referred_by_user = User::where('referral_code', $orderDetail->product_referral_code)->first();
-                        if ($referred_by_user && class_exists('App\\Http\\Controllers\\AffiliateController')) {
-                            $affiliateController = app()->make('App\\Http\\Controllers\\AffiliateController');
-                            if (method_exists($affiliateController, 'processAffiliateStats')) {
-                                $affiliateController->processAffiliateStats($referred_by_user->id, 0, 0, $no_of_delivered, $no_of_canceled);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // Delivery Status change email notification to Admin, seller, Customer
-        EmailUtility::order_email($order, $request->status);
-
-        // Delivery Status change SMS notification
-        if (addon_is_activated('otp_system') && SmsTemplate::where('identifier', 'delivery_status_change')->first()->status == 1) {
-            try {
-                SmsUtility::delivery_status_change(json_decode($order->shipping_address)->phone, $order);
-            } catch (\Exception $e) {}
-        }
-
-        //Send web Notifications to user
-        NotificationUtility::sendNotification($order, $request->status);
-
-        //Sends Firebase Notifications to user
-        if (get_setting('google_firebase') == 1 && $order->user->device_token != null) {
-            $request->device_token = $order->user->device_token;
-            $request->title = "Order updated !";
-            $status = str_replace("_", "", $order->delivery_status);
-            $request->text = " Your order {$order->code} has been {$status}";
-
-            $request->type = "order";
-            $request->id = $order->id;
-            $request->user_id = $order->user->id;
-
-            NotificationUtility::sendFirebaseNotification($request);
-        }
-
-
-        if (addon_is_activated('delivery_boy')) {
-            if (Auth::user()->user_type == 'delivery_boy') {
-                $deliveryBoyController = new DeliveryBoyController;
-                $deliveryBoyController->store_delivery_history($order);
-            }
-        }
+        app(\App\Services\OrderDeliveryStatusService::class)->change($order, (string) $request->status, Auth::user());
 
         return 1;
     }

@@ -15,9 +15,22 @@ class DhlController extends Controller
 {
     use BuildsShipmentPackages;
 
+    /**
+     * Credentials stay in .env; shipper/origin details come from
+     * Admin > Setup > Shipping > Courier APIs, falling back to config.
+     */
     protected function cfg(string $key, $default = null)
     {
-        return config("courier_providers.dhl.{$key}", $default);
+        if (!in_array($key, ['api_base_url', 'api_key', 'api_secret', 'account_number'], true) && function_exists('get_setting')) {
+            $setting = get_setting('dhl_' . $key);
+            if ($setting !== null && $setting !== '') {
+                return $setting;
+            }
+        }
+
+        $value = config("courier_providers.dhl.{$key}");
+
+        return $value === null || $value === '' ? $default : $value;
     }
 
     protected function hasCredentials(): bool

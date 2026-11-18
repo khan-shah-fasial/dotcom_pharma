@@ -5,17 +5,24 @@ namespace App\Http\Controllers\Shipment\Concerns;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Support\ShipmentPackage;
 use Illuminate\Http\Request;
 
 trait BuildsShipmentPackages
 {
     protected function buildPackageFromOrder(Order $order): array
     {
-        $totalWeight = 0.0;
-        $totalLength = 0.0;
-        $totalWidth = 0.0;
-        $totalHeight = 0.0;
+        // Box weight/dimensions entered on the order win over item estimates.
+        $orderWeight = (float) ($order->weight_kg ?? 0) ?: ((float) ($order->weight_grams ?? 0) / 1000);
+        $orderLength = (float) ($order->length_cm ?? 0);
+        $orderWidth = (float) ($order->width_cm ?? 0);
+        $orderHeight = (float) ($order->height_cm ?? 0);
 
+        if ($orderWeight > 0 && $orderLength > 0 && $orderWidth > 0 && $orderHeight > 0) {
+            return ShipmentPackage::format($orderWeight, $orderLength, $orderWidth, $orderHeight);
+        }
+
+        $lines = [];
         foreach ($order->orderDetails as $detail) {
             $product = $detail->product;
             $qty = (int) $detail->quantity;
@@ -28,13 +35,14 @@ trait BuildsShipmentPackages
                 ? $product->stocks->where('variant', $detail->variation)->first()
                 : null;
 
-            $totalLength += (float) ($stock->length ?? $product->length ?? 10) * $qty;
-            $totalWidth += (float) ($stock->width ?? $product->width ?? 10) * $qty;
-            $totalHeight += (float) ($stock->height ?? $product->height ?? 10) * $qty;
-            $totalWeight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $qty;
+            $lines[] = ShipmentPackage::line($stock, $product, $qty);
         }
 
-        return $this->formatPackage($totalWeight, $totalLength, $totalWidth, $totalHeight);
+        $package = ShipmentPackage::fromLines($lines);
+
+        return $orderWeight > 0
+            ? ShipmentPackage::format($orderWeight, (float) $package['box_length'], (float) $package['box_breadth'], (float) $package['box_height'])
+            : $package;
     }
 
     protected function buildPackageFromCart(): array
@@ -43,11 +51,7 @@ trait BuildsShipmentPackages
             ? Cart::with('product.stocks')->where('user_id', auth()->id())->get()
             : collect(session('cart', []));
 
-        $totalWeight = 0.0;
-        $totalLength = 0.0;
-        $totalWidth = 0.0;
-        $totalHeight = 0.0;
-
+        $lines = [];
         foreach ($carts as $item) {
             $product = $item->product ?? null;
             $qty = (int) ($item->quantity ?? $item->qty ?? 1);
@@ -59,34 +63,15 @@ trait BuildsShipmentPackages
             $variant = $item->variation ?? $item->variant ?? null;
             $stock = $variant ? $product->stocks->where('variant', $variant)->first() : null;
 
-            $totalLength += (float) ($stock->length ?? $product->length ?? 10) * $qty;
-            $totalWidth += (float) ($stock->width ?? $product->width ?? 10) * $qty;
-            $totalHeight += (float) ($stock->height ?? $product->height ?? 10) * $qty;
-            $totalWeight += (float) ($stock->weight ?? $product->weight ?? 0.21) * $qty;
+            $lines[] = ShipmentPackage::line($stock, $product, $qty);
         }
 
-        return $this->formatPackage($totalWeight, $totalLength, $totalWidth, $totalHeight);
+        return ShipmentPackage::fromLines($lines);
     }
 
     protected function formatPackage(float $weight, float $length, float $width, float $height): array
     {
-        if ($weight <= 0) {
-            $weight = 0.21;
-        }
-
-        $boxLength = $length > 0 ? $length : 10;
-        $boxWidth = $width > 0 ? $width : 10;
-        $boxHeight = $height > 0 ? $height : 10;
-        $volumetricWeight = round(($boxLength * $boxWidth * $boxHeight) / 5000, 2);
-
-        return [
-            'total_physical_weight' => number_format($weight, 2, '.', ''),
-            'box_length' => number_format($boxLength, 2, '.', ''),
-            'box_breadth' => number_format($boxWidth, 2, '.', ''),
-            'box_height' => number_format($boxHeight, 2, '.', ''),
-            'volumetric_weight' => number_format($volumetricWeight, 2, '.', ''),
-            'charged_weight' => number_format($weight, 2, '.', ''),
-        ];
+        return ShipmentPackage::format($weight, $length, $width, $height);
     }
 
     protected function resolveRateContext($orderOrRequest): array
@@ -109,8 +94,7 @@ trait BuildsShipmentPackages
 
         return [
             'to_pincode' => $address['postal_code'] ?? $address['zipcode'] ?? null,
-            'payment_type' => 'prepaid',
-            // 'payment_type' => ($orderOrRequest->payment_type == 'cash_on_delivery') ? 'cod' : 'prepaid',
+            'payment_type' => $this->isCodOrder($orderOrRequest) ? 'cod' : 'prepaid',
             'package' => $this->buildPackageFromOrder($orderOrRequest),
             'address' => $address,
         ];
@@ -142,5 +126,12 @@ trait BuildsShipmentPackages
         }
 
         return $items;
+    }
+
+    protected function isCodOrder(Order $order): bool
+    {
+        $type = str_replace(['_', ' '], '-', strtolower(trim((string) $order->payment_type)));
+
+        return in_array($type, ['cash-on-delivery', 'cod'], true);
     }
 }

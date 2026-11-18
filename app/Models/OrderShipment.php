@@ -9,7 +9,12 @@ class OrderShipment extends Model
     {
     use PreventDemoModeChanges;
     protected $fillable = [
-        'order_id','shipping_method_id','shipping_id', 'tracking_url', 'shipping_type','raw_response','status'
+        'order_id','shipping_method_id','shipping_id', 'tracking_url', 'label_path', 'shipping_type','raw_response','status',
+        'courier_status', 'last_synced_at',
+    ];
+
+    protected $casts = [
+        'last_synced_at' => 'datetime',
     ];
 
     /**

@@ -31,7 +31,7 @@ class BusinessSettingsController extends Controller
         $this->middleware(['permission:google_recaptcha_configuration'])->only('google_recaptcha');
         $this->middleware(['permission:google_map_setting'])->only('google_map');
         $this->middleware(['permission:google_firebase_setting'])->only('google_firebase');
-        $this->middleware(['permission:shipping_configuration'])->only('shipping_configuration');
+        $this->middleware(['permission:shipping_configuration'])->only('shipping_configuration', 'courier_settings');
     }
 
     public function general_setting(Request $request)
@@ -536,6 +536,17 @@ class BusinessSettingsController extends Controller
     public function shipping_configuration(Request $request)
     {
         return view('backend.setup_configurations.shipping_configuration.index');
+    }
+
+    public function courier_settings(Request $request)
+    {
+        return view('backend.setup_configurations.courier_settings.index', [
+            'credentialStatus' => [
+                'delhivery' => filled(config('courier_providers.delhivery.api_token')),
+                'bluedart' => filled(config('courier_providers.bluedart.client_id')) || filled(config('courier_providers.bluedart.jwt_token')),
+                'dhl' => filled(config('courier_providers.dhl.api_key')) && filled(config('courier_providers.dhl.api_secret')),
+            ],
+        ]);
     }
 
     public function shipping_configuration_update(Request $request)

@@ -503,7 +503,7 @@ Route::post('/shipment/create', function (Request $request) {
     $message = $data['message'] ?? $data['msg'] ?? ($success ? 'Shipment created' : 'Shipment creation failed');
 
     return response()->json(['success' => (bool) $success, 'message' => $message, 'data' => $data]);
-})->name('shipment.create')->middleware('auth');
+})->name('shipment.create')->middleware(['auth', 'admin']);
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/product-notify', [\App\Http\Controllers\ProductNotifyController::class, 'store'])->name('product-notify.store');

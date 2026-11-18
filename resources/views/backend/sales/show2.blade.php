@@ -63,13 +63,49 @@
         <div class="card-body">
             <div class="row gutters-10 align-items-center">
                 <div class="col-md">
-                    @if ($order->shipping_choice === 'courier' && (!$order->shipment || $order->shipment->status === 'error'))
+                    @php $courierShipment = $order->shipment; @endphp
+                    @if ($order->shipping_choice === 'courier' && (!$courierShipment || in_array($courierShipment->status, ['error', 'cancelled'], true)))
                         <button id="create-shipment-btn" class="btn btn-primary" type="button"
                             data-order="{{ encrypt($order->id) }}"
                             data-provider="{{ $order->shipping_by ?? '' }}"
                             data-total="{{ (float) $order->grand_total }}">
                             {{ translate('Create Shipment') }}
                         </button>
+                    @endif
+                    @if ($courierShipment && filled($courierShipment->shipping_id))
+                        <div class="mt-2" id="courier-shipment-panel">
+                            <div class="fs-13">
+                                <span class="fw-700">{{ translate('AWB') }}:</span>
+                                @if ($courierShipment->tracking_url)
+                                    <a href="{{ $courierShipment->tracking_url }}" target="_blank" rel="noopener">{{ $courierShipment->shipping_id }}</a>
+                                @else
+                                    {{ $courierShipment->shipping_id }}
+                                @endif
+                                <span class="badge badge-inline {{ $courierShipment->status === 'cancelled' ? 'badge-danger' : 'badge-info' }} ml-1">
+                                    {{ $courierShipment->courier_status ?: ucfirst((string) $courierShipment->status) }}
+                                </span>
+                                @if ($courierShipment->last_synced_at)
+                                    <span class="text-muted fs-12 ml-1">{{ translate('updated') }} {{ $courierShipment->last_synced_at->diffForHumans() }}</span>
+                                @endif
+                            </div>
+                            <div class="mt-1">
+                                @if ($courierShipment->status !== 'cancelled')
+                                    <a href="{{ route('courier_shipment.label', $order->id) }}" class="btn btn-sm btn-soft-primary">
+                                        <i class="las la-file-pdf mr-1"></i>{{ translate('Label') }}
+                                    </a>
+                                @endif
+                                <button type="button" class="btn btn-sm btn-soft-secondary" id="courier-track-btn">
+                                    <i class="las la-sync mr-1"></i>{{ translate('Refresh tracking') }}
+                                </button>
+                                @if ($courierShipment->status !== 'cancelled')
+                                    @can('update_order_delivery_status')
+                                        <button type="button" class="btn btn-sm btn-soft-danger" id="courier-cancel-btn">
+                                            {{ translate('Cancel AWB') }}
+                                        </button>
+                                    @endcan
+                                @endif
+                            </div>
+                        </div>
                     @endif
                 </div>
 
@@ -490,6 +526,33 @@
                     AIZ.plugins.notify('danger', (xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Unable to create shipment.') }}');
                     button.prop('disabled', false);
                 });
+            });
+
+            function courierAction(url, button, confirmText) {
+                if (confirmText && !confirm(confirmText)) {
+                    return;
+                }
+                button.prop('disabled', true);
+                $.post(url, { _token: csrf }).done(function (payload) {
+                    if (payload && payload.success) {
+                        AIZ.plugins.notify('success', payload.message || payload.status || '{{ translate('Updated') }}');
+                        window.setTimeout(function () { window.location.reload(); }, 800);
+                        return;
+                    }
+                    AIZ.plugins.notify('danger', (payload && payload.message) || '{{ translate('Courier request failed.') }}');
+                    button.prop('disabled', false);
+                }).fail(function (xhr) {
+                    AIZ.plugins.notify('danger', (xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Courier request failed.') }}');
+                    button.prop('disabled', false);
+                });
+            }
+
+            $('#courier-track-btn').on('click', function () {
+                courierAction('{{ route('courier_shipment.track', $order->id) }}', $(this));
+            });
+
+            $('#courier-cancel-btn').on('click', function () {
+                courierAction('{{ route('courier_shipment.cancel', $order->id) }}', $(this), '{{ translate('Cancel this AWB with the courier? This only works before pickup.') }}');
             });
 
             $('#assign-deliver-boy').on('change', function () {

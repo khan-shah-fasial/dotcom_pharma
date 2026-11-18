@@ -15,9 +15,22 @@ class BluedartController extends Controller
 {
     use BuildsShipmentPackages;
 
+    /**
+     * Credentials stay in .env; shipper/origin details come from
+     * Admin > Setup > Shipping > Courier APIs, falling back to config.
+     */
     protected function cfg(string $key, $default = null)
     {
-        return config("courier_providers.bluedart.{$key}", $default);
+        if (!in_array($key, ['api_base_url', 'jwt_token', 'client_id', 'client_secret', 'login_id', 'licence_key', 'customer_code'], true) && function_exists('get_setting')) {
+            $setting = get_setting('bluedart_' . $key);
+            if ($setting !== null && $setting !== '') {
+                return $setting;
+            }
+        }
+
+        $value = config("courier_providers.bluedart.{$key}");
+
+        return $value === null || $value === '' ? $default : $value;
     }
 
     protected function hasCredentials(): bool
@@ -68,11 +81,14 @@ class BluedartController extends Controller
         }
 
         $productCode = (string) $this->cfg('product_code', 'D');
+        $subProductCode = ($context['payment_type'] ?? 'prepaid') === 'cod'
+            ? 'C'
+            : (string) $this->cfg('sub_product_code', 'P');
         $payload = [
             'pinCode' => (string) $this->cfg('origin_pincode'),
             'pinCodeTo' => (string) $context['to_pincode'],
             'pProductCode' => $productCode,
-            'pSubProductCode' => (string) $this->cfg('sub_product_code', ''),
+            'pSubProductCode' => $subProductCode,
             'pPudate' => '/Date(' . (now()->timestamp * 1000) . ')/',
             'pPickupTime' => '1600',
             'profile' => $this->profile(),
@@ -108,7 +124,7 @@ class BluedartController extends Controller
                 'price' => $price,
                 'meta' => [
                     'product_code' => $productCode,
-                    'sub_product_code' => $this->cfg('sub_product_code', ''),
+                    'sub_product_code' => $subProductCode,
                     'charged_weight' => $context['package']['charged_weight'] ?? null,
                 ],
                 'raw' => $raw,
@@ -131,6 +147,9 @@ class BluedartController extends Controller
         [$addr1, $addr2, $addr3] = $this->splitAddress($addr['address'] ?? '');
         [$shipperAddr1, $shipperAddr2, $shipperAddr3] = $this->splitAddress($this->cfg('shipper_address'));
         $productCode = (string) ($order->shipping_courier_id ?: $this->cfg('product_code', 'D'));
+        $isCod = $this->isCodOrder($order);
+        // Blue Dart: sub product 'C' = COD (collect CollectableAmount), 'P' = prepaid.
+        $subProductCode = $isCod ? 'C' : (string) $this->cfg('sub_product_code', 'P');
 
         $payload = [
             'Request' => [
@@ -157,7 +176,9 @@ class BluedartController extends Controller
                 ],
                 'Services' => [
                     'AWBNo' => '',
-                    'ActualWeight' => $package['charged_weight'],
+                    'ActualWeight' => $package['total_physical_weight'],
+                    'CollectableAmount' => $isCod ? (float) $order->grand_total : 0,
+                    'DeclaredValue' => (float) $order->grand_total,
                     'Commodity' => [],
                     'CreditReferenceNo' => (string) $order->code,
                     'Dimensions' => [[
@@ -173,7 +194,7 @@ class BluedartController extends Controller
                     'ProductCode' => $productCode,
                     'ProductType' => 0,
                     'RegisterPickup' => false,
-                    'SubProductCode' => (string) $this->cfg('sub_product_code', ''),
+                    'SubProductCode' => $subProductCode,
                     'itemdtl' => $this->itemDetails($order),
                     'noOfDCGiven' => 0,
                 ],

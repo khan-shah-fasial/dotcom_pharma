@@ -8,8 +8,11 @@ use App\Models\Order;
 use App\Models\OrderShipment;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use App\Services\OrderDeliveryStatusService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class DelhiveryController extends Controller
 {
@@ -23,7 +26,7 @@ class DelhiveryController extends Controller
             return $setting;
         }
 
-        if (!in_array($key, ['api_base_url', 'rate_api_url', 'api_token'], true)) {
+        if (!in_array($key, ['api_base_url', 'api_token'], true)) {
             return $default;
         }
 
@@ -33,8 +36,7 @@ class DelhiveryController extends Controller
     protected function hasCredentials(): bool
     {
         return (bool) (
-            $this->cfg('api_base_url')
-            && $this->cfg('api_token')
+            $this->cfg('api_token')
             && $this->pickupCfg('name')
         );
     }
@@ -43,9 +45,33 @@ class DelhiveryController extends Controller
     {
         return (bool) (
             $this->cfg('api_token')
-            && $this->cfg('rate_api_url')
             && $this->cfg('origin_pincode')
         );
+    }
+
+    /**
+     * One host for every call so staging and production never mix.
+     */
+    public function host(): string
+    {
+        $hosts = (array) config('courier_providers.delhivery.hosts', []);
+        $environment = strtolower(trim((string) config('courier_providers.delhivery.environment')));
+
+        if (isset($hosts[$environment])) {
+            return rtrim($hosts[$environment], '/');
+        }
+
+        $parts = parse_url((string) $this->cfg('api_base_url'));
+        if (!empty($parts['host'])) {
+            return ($parts['scheme'] ?? 'https') . '://' . $parts['host'];
+        }
+
+        return rtrim($hosts['staging'] ?? 'https://staging-express.delhivery.com', '/');
+    }
+
+    protected function url(string $path): string
+    {
+        return $this->host() . '/' . ltrim($path, '/');
     }
 
     protected function http()
@@ -61,7 +87,7 @@ class DelhiveryController extends Controller
 
         if (!$this->hasCredentials()) {
             Log::warning('[Delhivery][Rates] Credentials missing', [
-                'api_base_url_present' => !empty($this->cfg('api_base_url')),
+                'host' => $this->host(),
                 'api_token_present' => !empty($this->cfg('api_token')),
                 'pickup_location_present' => !empty($this->pickupCfg('name')),
                 'client_name_present' => !empty($this->cfg('client_name')),
@@ -79,6 +105,14 @@ class DelhiveryController extends Controller
             return ['success' => false, 'data' => [], 'message' => 'to_pincode or address_id required'];
         }
 
+        $service = $this->serviceability((string) $context['to_pincode']);
+        if ($service['checked'] && !$service['serviceable']) {
+            return ['success' => false, 'data' => [], 'message' => 'Delhivery does not deliver to pincode ' . $context['to_pincode']];
+        }
+        if ($service['checked'] && ($context['payment_type'] ?? 'prepaid') === 'cod' && !$service['cod']) {
+            return ['success' => false, 'data' => [], 'message' => 'Delhivery cash on delivery is not available for pincode ' . $context['to_pincode']];
+        }
+
         $accountContext = $this->resolveAccountContext($orderOrRequest);
 
         Log::debug('[Delhivery][Rates] Context resolved', [
@@ -90,7 +124,7 @@ class DelhiveryController extends Controller
             'user_subtype' => $accountContext['user_subtype'],
             'package' => $context['package'] ?? null,
             'dimensions' => $this->dimensionLog($context['package'] ?? []),
-            'rate_api_url' => $this->cfg('rate_api_url'),
+            'host' => $this->host(),
         ]);
 
         $rates = $this->getInvoiceRates($context);
@@ -107,9 +141,75 @@ class DelhiveryController extends Controller
             'origin_pincode_present' => !empty($this->cfg('origin_pincode')),
         ]);
 
+        // A Rs.0 fallback would show free shipping at checkout; only use a real configured charge.
+        if ((float) $this->cfg('default_charge', 0) <= 0) {
+            return ['success' => false, 'data' => [], 'message' => 'Delhivery rates unavailable'];
+        }
+
         return [
             'success' => true,
             'data' => [$this->fallbackRate($context)],
+        ];
+    }
+
+    /**
+     * Pincode serviceability, cached for 12 hours.
+     * 'checked' is false when the API could not be reached, so checkout is not blocked by an outage.
+     */
+    public function serviceability(string $pincode): array
+    {
+        $pincode = preg_replace('/\D+/', '', $pincode);
+        $unknown = ['checked' => false, 'serviceable' => true, 'prepaid' => true, 'cod' => true, 'pickup' => true, 'remarks' => ''];
+
+        if ($pincode === '' || !$this->cfg('api_token')) {
+            return $unknown;
+        }
+
+        $cacheKey = 'delhivery:pincode:' . md5($this->host()) . ':' . $pincode;
+        $cached = Cache::get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        try {
+            $response = $this->http()->timeout(10)->get($this->url('c/api/pin-codes/json/'), ['filter_codes' => $pincode]);
+        } catch (\Throwable $e) {
+            Log::warning('[Delhivery][Pincode] Exception', ['pincode' => $pincode, 'error' => $e->getMessage()]);
+            return $unknown;
+        }
+
+        if (!$response->successful()) {
+            Log::warning('[Delhivery][Pincode] API failed', ['pincode' => $pincode, 'status' => $response->status()]);
+            return $unknown;
+        }
+
+        $result = $this->parseServiceability($response->json() ?: []);
+        Cache::put($cacheKey, $result, now()->addHours(12));
+
+        return $result;
+    }
+
+    public function parseServiceability(array $json): array
+    {
+        $code = $json['delivery_codes'][0]['postal_code'] ?? null;
+
+        if (!is_array($code)) {
+            return ['checked' => true, 'serviceable' => false, 'prepaid' => false, 'cod' => false, 'pickup' => false, 'remarks' => 'Pincode not serviceable'];
+        }
+
+        $yes = fn ($value) => strtoupper((string) $value) === 'Y';
+        $remarks = trim((string) ($code['remarks'] ?? ''));
+        $embargo = stripos($remarks, 'embargo') !== false;
+        $prepaid = $yes($code['pre_paid'] ?? null) && !$embargo;
+        $cod = $yes($code['cod'] ?? null) && !$embargo;
+
+        return [
+            'checked' => true,
+            'serviceable' => $prepaid || $cod,
+            'prepaid' => $prepaid,
+            'cod' => $cod,
+            'pickup' => $yes($code['pickup'] ?? null),
+            'remarks' => $remarks,
         ];
     }
 
@@ -118,7 +218,6 @@ class DelhiveryController extends Controller
         if (!$this->hasRateCredentials()) {
             Log::warning('[Delhivery][Rates] Rate credentials missing', [
                 'api_token_present' => !empty($this->cfg('api_token')),
-                'rate_api_url_present' => !empty($this->cfg('rate_api_url')),
                 'origin_pincode_present' => !empty($this->cfg('origin_pincode')),
             ]);
             return [];
@@ -162,10 +261,11 @@ class DelhiveryController extends Controller
             'o_pin' => (string) $this->cfg('origin_pincode'),
             'd_pin' => (string) $context['to_pincode'],
             'ss' => 'Delivered',
+            'pt' => ($context['payment_type'] ?? 'prepaid') === 'cod' ? 'COD' : 'Pre-paid',
         ];
 
         Log::debug('[Delhivery][Rates][IN]', [
-            'endpoint' => $this->cfg('rate_api_url'),
+            'endpoint' => $this->url('api/kinko/v1/invoice/charges/.json'),
             'params' => $params,
             'dimensions' => $this->dimensionLog($context['package'] ?? []),
         ]);
@@ -173,7 +273,7 @@ class DelhiveryController extends Controller
         $startedAt = microtime(true);
 
         try {
-            $response = $this->http()->get($this->cfg('rate_api_url'), $params);
+            $response = $this->http()->get($this->url('api/kinko/v1/invoice/charges/.json'), $params);
 
             Log::debug('[Delhivery][Rates][OUT]', [
                 'mode' => $mode,
@@ -266,7 +366,7 @@ class DelhiveryController extends Controller
         if (!$this->hasCredentials()) {
             $data = ['success' => false, 'message' => 'Delhivery credentials are not configured'];
             Log::warning('[Delhivery][Create] Credentials missing', [
-                'api_base_url_present' => !empty($this->cfg('api_base_url')),
+                'host' => $this->host(),
                 'api_token_present' => !empty($this->cfg('api_token')),
                 'pickup_location_present' => !empty($this->pickupCfg('name')),
                 'client_name_present' => !empty($this->cfg('client_name')),
@@ -305,7 +405,7 @@ class DelhiveryController extends Controller
         ];
 
         Log::debug('[Delhivery][Create][IN]', [
-            'endpoint' => $this->cfg('api_base_url'),
+            'endpoint' => $this->url('api/cmu/create.json'),
             'pickup_location' => $payload['pickup_location']['name'] ?? null,
             'pickup_pincode' => $this->pickupCfg('pin_code'),
             'client_name' => $payload['shipments'][0]['client'] ?? null,
@@ -357,7 +457,7 @@ class DelhiveryController extends Controller
 
         $startedAt = microtime(true);
         try {
-            $response = $this->http()->asForm()->post($this->cfg('api_base_url'), $formPayload);
+            $response = $this->http()->asForm()->post($this->url('api/cmu/create.json'), $formPayload);
             $data = $response->json() ?: ['raw' => $response->body()];
             $data = $this->normalizeApiFailure($data);
 
@@ -577,7 +677,8 @@ class DelhiveryController extends Controller
 
     protected function shipmentPaymentMode(Order $order): string
     {
-        $configuredMode = trim((string) $this->cfg('shipment_payment_mode', 'Prepaid'));
+        // Default follows the order: COD orders must be booked as COD or the cash is never collected.
+        $configuredMode = trim((string) $this->cfg('shipment_payment_mode', 'match-order'));
         $normalizedMode = strtolower(str_replace(['_', ' '], '-', $configuredMode));
 
         if (in_array($normalizedMode, ['cod', 'cash-on-delivery'], true)) {
@@ -774,6 +875,215 @@ class DelhiveryController extends Controller
         return $success === true || $success === 'true' || $success === 'success';
     }
 
+    /**
+     * Download the shipping label PDF and keep a copy in storage/app/shipping-labels.
+     */
+    public function label(OrderShipment $shipment): array
+    {
+        $waybill = (string) $shipment->shipping_id;
+        if ($waybill === '') {
+            return ['success' => false, 'message' => 'This shipment has no waybill yet.'];
+        }
+
+        if ($shipment->label_path && Storage::disk('local')->exists($shipment->label_path)) {
+            return ['success' => true, 'path' => $shipment->label_path];
+        }
+
+        try {
+            $response = $this->http()->timeout(20)->get($this->url('api/p/packing_slip'), ['wbns' => $waybill, 'pdf' => 'true']);
+            $json = $response->json() ?: [];
+        } catch (\Throwable $e) {
+            Log::error('[Delhivery][Label] Exception', ['waybill' => $waybill, 'error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Could not reach Delhivery for the label.'];
+        }
+
+        $link = $json['packages'][0]['pdf_download_link'] ?? null;
+        if (!$response->successful() || !$link) {
+            Log::warning('[Delhivery][Label] No PDF link', ['waybill' => $waybill, 'status' => $response->status(), 'body' => mb_substr($response->body(), 0, 500)]);
+            return ['success' => false, 'message' => 'Delhivery did not return a label for waybill ' . $waybill . '.'];
+        }
+
+        try {
+            $pdf = Http::timeout(30)->get($link);
+        } catch (\Throwable $e) {
+            Log::error('[Delhivery][Label] Download exception', ['waybill' => $waybill, 'error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Could not download the label PDF.'];
+        }
+
+        if (!$pdf->successful() || $pdf->body() === '') {
+            return ['success' => false, 'message' => 'Could not download the label PDF.'];
+        }
+
+        $path = 'shipping-labels/delhivery/' . preg_replace('/[^A-Za-z0-9_-]/', '', $waybill) . '.pdf';
+        Storage::disk('local')->put($path, $pdf->body());
+        $shipment->label_path = $path;
+        $shipment->save();
+
+        return ['success' => true, 'path' => $path];
+    }
+
+    /**
+     * Fetch the latest courier status and store it on the shipment.
+     */
+    public function track(OrderShipment $shipment): array
+    {
+        $waybill = (string) $shipment->shipping_id;
+        if ($waybill === '') {
+            return ['success' => false, 'message' => 'This shipment has no waybill yet.'];
+        }
+
+        try {
+            $response = $this->http()->timeout(15)->get($this->url('api/v1/packages/json/'), ['waybill' => $waybill]);
+            $json = $response->json() ?: [];
+        } catch (\Throwable $e) {
+            Log::error('[Delhivery][Track] Exception', ['waybill' => $waybill, 'error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Could not reach Delhivery for tracking.'];
+        }
+
+        $tracking = $this->parseTracking($json);
+        if (!$response->successful() || !$tracking) {
+            Log::warning('[Delhivery][Track] No tracking data', ['waybill' => $waybill, 'status' => $response->status(), 'body' => mb_substr($response->body(), 0, 500)]);
+            return ['success' => false, 'message' => 'Delhivery returned no tracking for waybill ' . $waybill . '.'];
+        }
+
+        $shipment->courier_status = mb_substr($tracking['status'], 0, 100);
+        $shipment->last_synced_at = now();
+        if ($tracking['stage'] === 'cancelled') {
+            $shipment->status = 'cancelled';
+        }
+        $shipment->save();
+
+        $orderStatus = null;
+        $order = $shipment->order;
+        if ($order) {
+            try {
+                $orderStatus = app(OrderDeliveryStatusService::class)->advanceFromCourier($order, $tracking['stage'], $tracking['status']);
+            } catch (\Throwable $e) {
+                Log::error('[Delhivery][Track] Order status update failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
+        }
+
+        return ['success' => true, 'order_status' => $orderStatus] + $tracking;
+    }
+
+    /**
+     * stage is one of: manifested, in_transit, out_for_delivery, delivered, returned, cancelled, unknown.
+     */
+    public function parseTracking(array $json): ?array
+    {
+        $data = $json['ShipmentData'][0]['Shipment'] ?? null;
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $statusBlock = $data['Status'] ?? [];
+        $status = trim((string) ($statusBlock['Status'] ?? ''));
+        $type = strtoupper(trim((string) ($statusBlock['StatusType'] ?? '')));
+        $lower = strtolower($status);
+
+        $stage = match (true) {
+            $type === 'DL' && str_contains($lower, 'rto') => 'returned',
+            $type === 'DL' => 'delivered',
+            $type === 'RT' => 'returned',
+            $type === 'CN' || str_contains($lower, 'cancel') => 'cancelled',
+            str_contains($lower, 'dispatched') || str_contains($lower, 'out for delivery') => 'out_for_delivery',
+            in_array($lower, ['manifested', 'not picked', 'open', 'scheduled'], true) => 'manifested',
+            in_array($type, ['UD', 'PU', 'PP'], true) => 'in_transit',
+            default => 'unknown',
+        };
+
+        return [
+            'status' => $status !== '' ? $status : 'Unknown',
+            'status_type' => $type,
+            'stage' => $stage,
+            'location' => (string) ($statusBlock['StatusLocation'] ?? ''),
+            'updated_at' => (string) ($statusBlock['StatusDateTime'] ?? ''),
+            'instructions' => (string) ($statusBlock['Instructions'] ?? ''),
+            'expected_delivery' => (string) ($data['ExpectedDeliveryDate'] ?? $data['PromisedDeliveryDate'] ?? ''),
+        ];
+    }
+
+    /**
+     * Cancel the waybill with Delhivery. Only possible before it is picked up.
+     */
+    public function cancel(OrderShipment $shipment): array
+    {
+        $waybill = (string) $shipment->shipping_id;
+        if ($waybill === '') {
+            return ['success' => false, 'message' => 'This shipment has no waybill to cancel.'];
+        }
+
+        try {
+            $response = $this->http()->asJson()->timeout(15)->post($this->url('api/p/edit'), [
+                'waybill' => $waybill,
+                'cancellation' => 'true',
+            ]);
+            $json = $response->json() ?: [];
+        } catch (\Throwable $e) {
+            Log::error('[Delhivery][Cancel] Exception', ['waybill' => $waybill, 'error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Could not reach Delhivery to cancel.'];
+        }
+
+        $flag = $json['status'] ?? null;
+        $ok = $response->successful() && ($flag === true || in_array(strtolower((string) $flag), ['true', 'success'], true));
+        $remark = (string) ($json['remark'] ?? $json['error'] ?? $json['message'] ?? '');
+
+        Log::info('[Delhivery][Cancel] Response', ['waybill' => $waybill, 'ok' => $ok, 'remark' => $remark]);
+
+        if (!$ok) {
+            return ['success' => false, 'message' => $remark !== '' ? $remark : 'Delhivery did not cancel waybill ' . $waybill . '.'];
+        }
+
+        $shipment->status = 'cancelled';
+        $shipment->courier_status = 'Cancelled';
+        $shipment->last_synced_at = now();
+        $shipment->save();
+
+        return ['success' => true, 'message' => $remark !== '' ? $remark : 'Shipment cancelled.'];
+    }
+
+    /**
+     * Ask Delhivery to collect packages from the active pickup location.
+     */
+    public function requestPickup(string $date, string $time, int $packageCount): array
+    {
+        $location = $this->pickupCfg('name');
+        if (!$this->cfg('api_token') || !$location) {
+            return ['success' => false, 'message' => 'Delhivery token or pickup location is not configured.'];
+        }
+
+        $payload = [
+            'pickup_location' => $location,
+            'pickup_date' => $date,
+            'pickup_time' => strlen($time) === 5 ? $time . ':00' : $time,
+            'expected_package_count' => max(1, $packageCount),
+        ];
+
+        try {
+            $response = $this->http()->asJson()->timeout(15)->post($this->url('fm/request/new/'), $payload);
+            $json = $response->json() ?: [];
+        } catch (\Throwable $e) {
+            Log::error('[Delhivery][Pickup] Exception', ['error' => $e->getMessage()]);
+            return ['success' => false, 'message' => 'Could not reach Delhivery to book the pickup.'];
+        }
+
+        Log::info('[Delhivery][Pickup] Response', ['status' => $response->status(), 'body' => mb_substr($response->body(), 0, 500)]);
+
+        $pickupId = $json['pickup_id'] ?? $json['pickupId'] ?? null;
+        if (!$response->successful() || !$pickupId) {
+            $error = $json['error']['message'] ?? $json['error'] ?? $json['message'] ?? null;
+            $error = is_array($error) ? json_encode($error) : $error;
+
+            return ['success' => false, 'message' => $error ? (string) $error : 'Delhivery did not confirm the pickup.'];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Pickup booked. Pickup ID ' . $pickupId . '.',
+            'pickup_id' => $pickupId,
+        ];
+    }
+
     protected function storeShipment(Order $order, ?ShippingMethod $method, ?string $waybill, ?string $trackingUrl, array $data, string $status, array $extra): void
     {
         OrderShipment::updateOrCreate(
@@ -787,6 +1097,11 @@ class DelhiveryController extends Controller
                 'status' => $status,
             ]
         );
+
+        if ($waybill && $status === 'created' && blank($order->tracking_code)) {
+            $order->tracking_code = $waybill;
+            $order->save();
+        }
 
         Log::info('[Delhivery][Create] Shipment record updated', [
             'order_id' => $order->id,
