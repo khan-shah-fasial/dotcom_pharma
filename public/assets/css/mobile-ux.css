@@ -1,0 +1,344 @@
+/*
+ * Mobile UX fixes (phones and small tablets).
+ * Loaded after custom-style.css and responsive.css so these rules win.
+ * Everything is scoped to max-width media queries; desktop is untouched.
+ */
+
+/* ============================================================
+   1. Header
+   ============================================================ */
+@media (max-width: 991.98px) {
+
+    /* --- Top bar: one row that scrolls sideways instead of clipping --- */
+    .top-navbar .container > .row {
+        align-items: center;
+    }
+
+    .top-navbar .container > .row > div:nth-child(1) {
+        flex: 1 1 0;
+        max-width: none;
+        min-width: 0;
+        padding-right: 8px;
+    }
+
+    .top-navbar .container > .row > div:nth-child(2) {
+        flex: 0 0 auto;
+        max-width: none;
+        width: auto;
+        padding-left: 0;
+    }
+
+    .top-navbar .container > .row > div:nth-child(2) > ul > li:last-child {
+        margin-right: 0 !important;
+    }
+
+    .top-navbar .top_baar_icons {
+        flex-wrap: nowrap;
+        justify-content: flex-start !important;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 4px 0 !important;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .top-navbar .top_baar_icons::-webkit-scrollbar {
+        display: none;
+    }
+
+    .top-navbar .top_baar_icons li {
+        flex: 0 0 auto;
+        margin: 0 !important;
+    }
+
+    /* Veterinary / Human switch matters most, so show it first */
+    .top-navbar .top_baar_icons .veterinary_btn { order: -2; }
+    .top-navbar .top_baar_icons .human_btn { order: -1; }
+
+    /* Fade the right edge so it is clear the row scrolls */
+    .top-navbar .top_baar_icons {
+        -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+        mask-image: linear-gradient(to right, #000 85%, transparent);
+        padding-right: 24px !important;
+    }
+
+    /* Larger tap targets (min 32px tall) and readable 12px text */
+    .top-navbar .top_baar_icons li a,
+    .top-navbar .language-currency {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+        width: auto !important;
+        min-height: 32px;
+        height: auto !important;
+        padding: 0 10px !important;
+        font-size: 12px !important;
+        line-height: 1 !important;
+        white-space: nowrap;
+        top: 0 !important;
+    }
+
+    .top-navbar .top_baar_icons li a i,
+    .top-navbar .language-currency i {
+        top: 0 !important;
+        font-size: 14px;
+    }
+
+    .top-navbar {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+    }
+
+    /* --- Logo bar: [menu] [logo .......] [search] [bell] --- */
+    .logo-bar-area .container > div > .row {
+        flex-wrap: nowrap;
+        align-items: center;
+        min-height: 56px;
+    }
+
+    .logo-bar-area .mobile-menu-col,
+    .logo-bar-area .mobile-actions-col {
+        flex: 0 0 auto;
+        width: auto;
+        max-width: none;
+    }
+
+    .logo-bar-area .mobile-logo-col {
+        flex: 1 1 auto;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding-left: 4px;
+    }
+
+    .logo-bar-area .mobile-menu-col .mobile_icons_menus {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        margin: 0 !important;
+    }
+
+    .logo-bar-area img.logo_main {
+        width: 150px !important;
+        max-width: 100%;
+        height: auto;
+        padding-top: 0 !important;
+    }
+
+    .logo-bar-area .mobile-actions-col .display_flex1 {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .logo-bar-area .mobile-actions-col .search-toggle-side-nav-bar,
+    .logo-bar-area .mobile-actions-col .notificatin_style {
+        position: static !important;
+        margin: 0 !important;
+    }
+
+    .logo-bar-area .mobile-actions-col .search-toggle-side-nav-bar > a,
+    .logo-bar-area .mobile-actions-col .notificatin_style .dropdown-toggle {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0 !important;
+    }
+
+    .logo-bar-area .mobile-actions-col .la-2x {
+        font-size: 1.75em;
+        padding-top: 0 !important;
+    }
+}
+
+/* ============================================================
+   2. Product page
+   ============================================================ */
+.product-spec-label {
+    min-width: 92px;
+}
+
+.mobile-buy-bar {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .mobile-buy-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        /* sits on top of the 64px bottom nav */
+        bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+        z-index: 1029;
+        padding: 8px 12px;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+        transform: translateY(150%);
+        visibility: hidden;
+        transition: transform 0.2s ease, visibility 0.2s;
+    }
+
+    .mobile-buy-bar.is-visible {
+        transform: translateY(0);
+        visibility: visible;
+    }
+
+    .mobile-buy-bar__price {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
+        line-height: 1.2;
+    }
+
+    .mobile-buy-bar--no-price .mobile-buy-bar__price {
+        display: none;
+    }
+
+    .mobile-buy-bar__label {
+        font-size: 11px;
+        color: #6b7280;
+    }
+
+    .mobile-buy-bar__amount {
+        font-size: 16px;
+        color: #123498;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-buy-bar__btn {
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 0 14px !important;
+        border-radius: 22px !important;
+        font-size: 13px !important;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .mobile-buy-bar--no-price .mobile-buy-bar__btn {
+        flex: 1 1 0;
+    }
+
+    /* keep the end of the page reachable above the bar */
+    body.has-mobile-buy-bar {
+        padding-bottom: 70px;
+    }
+}
+
+/* ============================================================
+   3. Cart
+   ============================================================ */
+.mobile-checkout-bar {
+    display: none;
+}
+
+@media (max-width: 1199.98px) {
+    /* Stepper reads  [ - ] 1 [ + ]  in a row (desktop keeps its vertical layout) */
+    .cart-qty-stepper {
+        flex-direction: row !important;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .cart-qty-stepper [data-type="minus"] { order: 1; }
+    .cart-qty-stepper .input-number { order: 2; }
+    .cart-qty-stepper [data-type="plus"] { order: 3; }
+
+    .cart-qty-stepper .btn-icon {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .mobile-checkout-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+        z-index: 1029;
+        padding: 8px 12px;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    .mobile-checkout-bar__total {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-width: 0;
+        line-height: 1.2;
+    }
+
+    .mobile-checkout-bar__label {
+        font-size: 11px;
+        color: #6b7280;
+    }
+
+    .mobile-checkout-bar__amount {
+        font-size: 17px;
+        color: #123498;
+        white-space: nowrap;
+    }
+
+    .mobile-checkout-bar__btn {
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 0 18px !important;
+        border-radius: 22px !important;
+        font-size: 14px !important;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* room for the bar so the summary is not hidden behind it */
+    body:has(.mobile-checkout-bar) {
+        padding-bottom: 70px;
+    }
+}
+
+/* Pinned bars step aside while a pop-up is open */
+body.modal-open .mobile-buy-bar,
+body.modal-open .mobile-checkout-bar {
+    visibility: hidden !important;
+}
+
+/* ============================================================
+   4. Forms
+   ============================================================ */
+@media (max-width: 991.98px) {
+    /* iOS zooms the page when a focused field is under 16px; keep fields at 16px on phones */
+    input.form-control,
+    select.form-control,
+    textarea.form-control,
+    .bootstrap-select .dropdown-toggle,
+    .iti input[type="tel"] {
+        font-size: 16px !important;
+    }
+}
+
+/* Phones: drop the location / clock / exchange-rate strip (saves ~45px of header) */
+@media (max-width: 767.98px) {
+    .top-navbar .frontend-header-live-info {
+        display: none !important;
+    }
+}

@@ -11,7 +11,7 @@
                 <label>{{ translate('Address')}}</label>
             </div>
             <div class="col-md-10">
-                <textarea class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Address')}}" rows="2" name="address" required>{{ $address_data->address }}</textarea>
+                <textarea class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Address')}}" rows="2" name="address" autocomplete="street-address" required>{{ $address_data->address }}</textarea>
             </div>
         </div>
 
@@ -105,7 +105,7 @@
                 <label>{{ translate('Postal code')}}</label>
             </div>
             <div class="col-md-10">
-                <input type="text" class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Postal Code')}}" value="{{ $address_data->postal_code }}" name="postal_code" value="" required>
+                <input type="text" class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Postal Code')}}" value="{{ $address_data->postal_code }}" name="postal_code" autocomplete="postal-code" inputmode="numeric" value="" required>
             </div>
         </div>
 
@@ -124,7 +124,7 @@
                 <label>{{ translate('Phone')}}</label>
             </div>
             <div class="col-md-10">
-                <input type="text" id="phone_code_addr_edit" class="form-control mb-3 rounded-0" placeholder="{{ translate('+880')}}" value="{{ $Phone_parts_number }}" name="phone" required>
+                <input type="tel" autocomplete="tel-national" inputmode="numeric" id="phone_code_addr_edit" class="form-control mb-3 rounded-0" placeholder="{{ translate('+880')}}" value="{{ $Phone_parts_number }}" name="phone" required>
 
                 <input type="hidden" name="country_code_phone_code_addr_edit" value="">
                 <input type="hidden" name="phone_code_addr_edit_meta" value="">

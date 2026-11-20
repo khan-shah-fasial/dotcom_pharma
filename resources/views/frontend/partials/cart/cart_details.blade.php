@@ -142,7 +142,7 @@
                                                 <!-- Quantity -->
                                                 <div>
                                                     @if ($product->digital != 1 && $product->auction_product == 0)
-                                                        <div class="d-flex flex-xl-column flex-xxl-row align-items-center aiz-plus-minus mr-0 ml-0" style="width: max-content !important;">
+                                                        <div class="d-flex flex-xl-column flex-xxl-row align-items-center aiz-plus-minus cart-qty-stepper mr-0 ml-0" style="width: max-content !important;">
                                                             <button
                                                                 class="btn col-auto btn-icon btn-sm btn-light rounded-0"
                                                                 type="button" data-type="plus"
@@ -272,7 +272,7 @@
                                                     <!-- Quantity -->
                                                     <div>
                                                         @if ($product->digital != 1 && $product->auction_product == 0)
-                                                            <div class="d-flex flex-xl-column flex-xxl-row align-items-center aiz-plus-minus mr-0 ml-0" style="width: max-content !important;">
+                                                            <div class="d-flex flex-xl-column flex-xxl-row align-items-center aiz-plus-minus cart-qty-stepper mr-0 ml-0" style="width: max-content !important;">
                                                                 <button
                                                                     class="btn col-auto btn-icon btn-sm btn-light rounded-0"
                                                                     type="button" data-type="plus"
@@ -332,8 +332,13 @@
                 <div class="border bg-white p-4">
                     <!-- Empty cart -->
                     <div class="text-center p-3">
-                        <i class="las la-frown la-3x opacity-60 mb-3"></i>
+                        <i class="las la-shopping-cart la-3x opacity-60 mb-3"></i>
                         <h3 class="h4 fw-700">{{translate('Your Cart is empty')}}</h3>
+                        <p class="text-secondary fs-14 mb-4">{{ translate('Browse our categories to find what you need.') }}</p>
+                        <div class="d-flex flex-column flex-sm-row justify-content-center" style="gap: 10px;">
+                            <a href="{{ route('home') }}" class="btn btn-primary px-4" style="background: #2b56a1 !important;">{{ translate('Continue shopping') }}</a>
+                            <a href="{{ route('categories.all') }}" class="btn btn-outline-secondary px-4">{{ translate('All Categories') }}</a>
+                        </div>
                     </div>
                 </div>
             </div>

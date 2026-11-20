@@ -19,7 +19,7 @@
                                 <label>{{ translate('Address')}}</label>
                             </div>
                             <div class="col-md-10">
-                                <textarea class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Address')}}" rows="2" name="address" required></textarea>
+                                <textarea class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Address')}}" rows="2" name="address" autocomplete="street-address" required></textarea>
                             </div>
                         </div>
 
@@ -103,7 +103,7 @@
                                 <label>{{ translate('Postal code')}}</label>
                             </div>
                             <div class="col-md-10">
-                                <input type="text" class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Postal Code')}}" name="postal_code" value="" required>
+                                <input type="text" class="form-control mb-3 rounded-0" placeholder="{{ translate('Your Postal Code')}}" name="postal_code" autocomplete="postal-code" inputmode="numeric" value="" required>
                             </div>
                         </div>
 
@@ -113,7 +113,7 @@
                                 <label>{{ translate('Phone')}}</label>
                             </div>
                             <div class="col-md-10">
-                                <input type="tel" id="phone_code_addr" class="form-control rounded-0" placeholder="" name="phone" autocomplete="off" required>
+                                <input type="tel" id="phone_code_addr" class="form-control rounded-0" placeholder="" name="phone" autocomplete="tel-national" required>
                                 <input type="hidden" name="country_code_phone_code_addr" value="">
                                 <input type="hidden" name="phone_code_addr_meta" value="">
                             </div>

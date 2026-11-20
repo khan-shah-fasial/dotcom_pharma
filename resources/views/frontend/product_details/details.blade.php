@@ -377,42 +377,29 @@
 
 
     <div class="row">
-        <div class="col-xl-2 col-lg-3 col-md-12 col-12">
-            <!-- Drug Name -->
-            @if (!empty($detailedProduct->drug_name))
-                <p class="mb-0 detail-gray-color fs-14">
-                    <span class="">{{ translate('Drug Name') }} </span>
+        {{-- Label and value on one line at every width (was split onto two lines on phones) --}}
+        @if (!empty($detailedProduct->drug_name))
+            <div class="col-12">
+                <p class="mb-1 detail-gray-color fs-14 d-flex">
+                    <span class="flex-shrink-0 product-spec-label">{{ translate('Drug Name') }}</span>
+                    <span>:&nbsp;{{ $detailedProduct->drug_name }}</span>
                 </p>
-            @endif
-        </div>
+            </div>
+        @endif
 
-        <div class="col-xl-10 col-lg-9 col-md-12 col-12">
-            <!-- Drug Name -->
-            @if (!empty($detailedProduct->drug_name))
-                <p class="mb-0 detail-gray-color fs-14">
-                    :&nbsp;{{ $detailedProduct->drug_name }}
+        @if (!empty($detailedProduct->role_label))
+            <div class="col-12">
+                <p class="mb-1 detail-gray-color fs-14 d-flex">
+                    <span class="flex-shrink-0 product-spec-label">{{ translate('Drug Role') }}</span>
+                    <span>:&nbsp;{{ $detailedProduct->role_label }}</span>
                 </p>
-            @endif
-        </div>
+            </div>
+        @endif
 
-        <div class="col-xl-2 col-lg-3 col-md-12 col-12 mb-lg-0 mb-0">
-            @if (!empty($detailedProduct->role_label))
-                <p class="mb-0 detail-gray-color fs-14">
-                    <span class="">{{ translate('Drug Role') }} </span>
-                </p>
-            @endif
-        </div>
-
-        <div class="col-xl-10 col-lg-9 col-md-12 col-12 mb-3">
-            @if (!empty($detailedProduct->role_label))
-                <p class="mb-0 detail-gray-color fs-14">
-                    :&nbsp;{{ $detailedProduct->role_label }}
-                </p>
-            @endif
-        </div>
+        <div class="col-12 mb-2"></div>
 
         @if (!empty($detailedProduct->schedule))
-            <div class="col-sm-6 col-12 mb-3">
+            <div class="col-6 mb-3">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Schedule') }}:</span><br>
                 <span class="fw-500 fs-14">{{ $detailedProduct->schedule }}</span>
             </div>
@@ -420,7 +407,7 @@
 
         @if (!is_null($detailedProduct->prescription_req))
             <!-- Discount percentage -->
-            <div class="col-sm-6 col-12 mb-3">
+            <div class="col-6 mb-3">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Prescription Required') }}:</span><br>
                 <span
                     class="fw-500 fs-14 detail-red-color">{{ $detailedProduct->prescription_req == 1 ? 'Yes' : 'No' }}</span>
@@ -428,7 +415,7 @@
         @endif
 
         @if (!empty($detailedProduct->brand->name))
-            <div class="col-sm-6 col-12">
+            <div class="col-6">
                 <span class="detail-font-14px detail-gray-color">{{ translate('Brand / Mfg') }}:</span><br>
                 <span class="fw-500 fs-14">{{ $detailedProduct->brand->name ?? '-' }}</span>
             </div>
@@ -840,7 +827,7 @@
 
 
         <!-- Add to cart & Buy now Buttons -->
-        <div class="mt-md-4 mt-2">
+        <div class="mt-md-4 mt-2" id="product-buy-actions">
 
 @if ($detailedProduct->digital == 0)
                 @if (
@@ -903,6 +890,73 @@
                 <i class="las la-question-circle fs-20 position_btn"></i> {{ translate('Product Enquiry') }}
             </button>
         </div>
+
+        {{-- Phones: buy bar pinned above the bottom nav while the real buttons are off screen.
+             Its buttons click the real ones, so stock / login / variant checks stay in one place. --}}
+        <div class="mobile-buy-bar d-lg-none" id="mobile-buy-bar" aria-hidden="true">
+            <div class="mobile-buy-bar__price">
+                <span class="mobile-buy-bar__label">{{ translate('Total') }}</span>
+                <strong class="mobile-buy-bar__amount" id="mobile-buy-bar-price"></strong>
+            </div>
+            <button type="button" class="btn btn-success mobile-buy-bar__btn" data-proxy="#product-buy-actions .btn-success.add-to-cart">
+                <i class="las la-shopping-bag"></i> {{ translate('Add to cart') }}
+            </button>
+            <button type="button" class="btn btn-primary mobile-buy-bar__btn" data-proxy="#product-buy-actions .detail-buy-now-btn-g">
+                {{ translate('Buy Now') }}
+            </button>
+        </div>
+        <script>
+            (function () {
+                var bar = document.getElementById('mobile-buy-bar');
+                var actions = document.getElementById('product-buy-actions');
+                if (!bar || !actions) return;
+
+                function target(btn) { return document.querySelector(btn.getAttribute('data-proxy')); }
+                function usable(el) { return el && !el.classList.contains('d-none') && el.offsetParent !== null; }
+
+                var buttons = bar.querySelectorAll('[data-proxy]');
+                buttons.forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var real = target(btn);
+                        if (usable(real)) real.click();
+                    });
+                });
+
+                var actionsVisible = true;
+                function update() {
+                    var anyUsable = false;
+                    buttons.forEach(function (btn) {
+                        var ok = usable(target(btn));
+                        btn.classList.toggle('d-none', !ok);
+                        anyUsable = anyUsable || ok;
+                    });
+                    var price = document.getElementById('chosen_price');
+                    var priceText = price ? price.textContent.trim() : '';
+                    document.getElementById('mobile-buy-bar-price').textContent = priceText;
+                    bar.classList.toggle('mobile-buy-bar--no-price', !priceText);
+                    var show = anyUsable && !actionsVisible;
+                    bar.classList.toggle('is-visible', show);
+                    bar.setAttribute('aria-hidden', show ? 'false' : 'true');
+                    document.body.classList.toggle('has-mobile-buy-bar', show);
+                }
+
+                if ('IntersectionObserver' in window) {
+                    new IntersectionObserver(function (entries) {
+                        actionsVisible = entries[0].isIntersecting;
+                        update();
+                    }).observe(actions);
+                }
+
+                var priceEl = document.getElementById('chosen_price');
+                if (priceEl && 'MutationObserver' in window) {
+                    new MutationObserver(update).observe(priceEl, { childList: true, characterData: true, subtree: true });
+                }
+                if ('MutationObserver' in window) {
+                    new MutationObserver(update).observe(actions, { attributes: true, subtree: true, attributeFilter: ['class'] });
+                }
+                update();
+            })();
+        </script>
 
         <!-- Social Share Buttons -->
         <div class="mt-md-4 mt-3 col-md-12 pl-0">

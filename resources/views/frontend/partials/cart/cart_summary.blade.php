@@ -195,6 +195,17 @@
                     {{ translate('Proceed to Checkout')}} ({{ sprintf("%02d", $product_count) }})
                 </a>
             </div>
+
+            {{-- Phones: total + checkout pinned above the bottom nav, so it is always one tap away --}}
+            <div class="mobile-checkout-bar d-lg-none">
+                <div class="mobile-checkout-bar__total">
+                    <span class="mobile-checkout-bar__label">{{ translate('Total') }} ({{ sprintf("%02d", $product_count) }})</span>
+                    <strong class="mobile-checkout-bar__amount">{{ single_price($total) }}</strong>
+                </div>
+                <a href="{{ route('checkout') }}" class="btn btn-primary mobile-checkout-bar__btn" style="background: #2b56a1 !important;">
+                    {{ translate('Proceed to Checkout') }}
+                </a>
+            </div>
             @endif
 
         </div>

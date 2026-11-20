@@ -750,7 +750,7 @@ body .translater_menu .select2-container {
                 <div class="">
                     <div class="row">
 
-                        <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block">
+                        <div class="col-lg-3 col-md-4 col-2 d-lg-none d-block mobile-menu-col">
                             <!-- mobile menu toggle -->
                             <label for="mobile-drawer-trigger"
                                 class="btn d-lg-none mr-3 mr-sm-4 p-0 active mobile_icons_menus"
@@ -768,7 +768,7 @@ body .translater_menu .select2-container {
 
                             </label>
                         </div>
-                        <div class="col-lg-3 col-md-4 col-8">
+                        <div class="col-lg-3 col-md-4 col-8 mobile-logo-col">
                             <!-- Header Logo -->
                             <div class="col-auto pl-0 pr-lg-3 pr-md-0 d-flex align-items-center">
                                 <a class="d-block home_btn" href="javascript:void(0)">
@@ -784,7 +784,7 @@ body .translater_menu .select2-container {
                                     @endif
                                 </a>
 
-                                 <a class="all-categories-btn-large d-flex align-items-center ml-4" href="/all-categories">
+                                 <a class="all-categories-btn-large d-none d-lg-flex align-items-center ml-4" href="/all-categories">
                                     <i class="las la-th-list mr-2"></i>
                                     <span>All Categories</span>
                                 </a>
@@ -989,7 +989,7 @@ body .translater_menu .select2-container {
                             </div> --}}
                         </div>
 
-                        <div class="col-lg-3 col-md-4 col-2">
+                        <div class="col-lg-3 col-md-4 col-2 mobile-actions-col">
                             <div class="display_flex1">
                                 <!-- Search Icon for small device -->
                                 <div class="ml-auto mr-0 search-toggle-side-nav-bar">
