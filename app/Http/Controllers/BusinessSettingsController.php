@@ -541,6 +541,11 @@ class BusinessSettingsController extends Controller
     public function courier_settings(Request $request)
     {
         return view('backend.setup_configurations.courier_settings.index', [
+            'environments' => [
+                'delhivery' => app(\App\Http\Controllers\Shipment\DelhiveryController::class)->isSandbox() ? 'SANDBOX' : 'LIVE',
+                'bluedart' => app(\App\Http\Controllers\Shipment\BluedartController::class)->isSandbox() ? 'SANDBOX' : 'LIVE',
+                'dhl' => app(\App\Http\Controllers\Shipment\DhlController::class)->isSandbox() ? 'TEST' : 'LIVE',
+            ],
             'credentialStatus' => [
                 'delhivery' => filled(config('courier_providers.delhivery.api_token')),
                 'bluedart' => filled(config('courier_providers.bluedart.client_id')) || filled(config('courier_providers.bluedart.jwt_token')),

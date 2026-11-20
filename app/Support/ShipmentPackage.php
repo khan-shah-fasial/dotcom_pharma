@@ -3,50 +3,105 @@
 namespace App\Support;
 
 /**
- * Builds the single-box package courier APIs expect.
+ * Builds the single-package details courier APIs expect, from the
+ * Weight And Dimension Master (product_stocks + product_stock_dimensions).
  *
- * Items are packed into one box: footprint = largest item length x width,
- * height = whatever is needed to hold the combined item volume. Charged
- * weight is the higher of physical and volumetric weight (L*W*H / 5000),
- * which is how Delhivery, Blue Dart and DHL bill.
+ * The master stores weights in GRAMS and sizes in CM. Couriers get kg.
+ *
+ * Per order line:
+ *  - full outer cases use the master's case gross weight and case size;
+ *  - loose pieces use the piece gross weight (falling back to net weight)
+ *    and piece size.
+ * Everything is then packed into one box: footprint = largest length x width,
+ * height = whatever holds the combined volume. Charged weight is the higher of
+ * physical and volumetric weight (L*W*H / 5000), which is how couriers bill.
  */
 class ShipmentPackage
 {
+    /** Used when the master has no usable weight for a piece. */
     public const DEFAULT_ITEM_WEIGHT_KG = 0.21;
+    /** Piece weights below this many grams are placeholders or old kg entries (shown as ~0 kg in the master). */
+    public const MIN_REAL_WEIGHT_G = 2.0;
     public const MIN_SIDE_CM = 10.0;
     public const VOLUMETRIC_DIVISOR = 5000;
 
-    /**
-     * Product or stock dimension, or null when not set.
-     */
-    public static function dimension($stock, $product, string $field): ?float
+    protected static function positive($value): ?float
     {
-        $value = $stock->{$field} ?? null;
-        if ((float) $value <= 0) {
-            $value = $product->{$field} ?? null;
-        }
+        return is_numeric($value) && (float) $value > 0 ? (float) $value : null;
+    }
 
-        return (float) $value > 0 ? (float) $value : null;
+    protected static function grams($value): ?float
+    {
+        $value = static::positive($value);
+
+        return $value !== null && $value >= static::MIN_REAL_WEIGHT_G ? $value : null;
     }
 
     /**
-     * Package line for one order/cart row.
+     * L, W, H in cm, or nulls when not entered (or the 1x1x1 placeholder).
+     */
+    protected static function dims($l, $w, $h): array
+    {
+        $dims = [static::positive($l), static::positive($w), static::positive($h)];
+
+        if (in_array(null, $dims, true) || max($dims) <= 1) {
+            return [null, null, null];
+        }
+
+        return $dims;
+    }
+
+    /**
+     * Package line for one order/cart row, read from the stock's master data.
+     * $product is accepted for older callers but its legacy weight field is not used.
      */
     public static function line($stock, $product, int $quantity): array
     {
-        $weight = static::dimension($stock, $product, 'weight') ?? static::DEFAULT_ITEM_WEIGHT_KG;
+        $sheet = $stock?->dimensionSheet ?? null;
 
-        return [
-            'weight' => $weight,
-            'length' => static::dimension($stock, $product, 'length'),
-            'width' => static::dimension($stock, $product, 'width'),
-            'height' => static::dimension($stock, $product, 'height'),
+        $pieceGrams = static::grams($sheet?->piece_gross ?? null) ?? static::grams($stock?->weight ?? null);
+        [$length, $width, $height] = static::dims($stock?->length ?? null, $stock?->width ?? null, $stock?->height ?? null);
+
+        $line = [
+            'weight' => $pieceGrams !== null ? $pieceGrams / 1000 : static::DEFAULT_ITEM_WEIGHT_KG,
+            'weight_known' => $pieceGrams !== null,
+            'length' => $length,
+            'width' => $width,
+            'height' => $height,
             'quantity' => max(1, $quantity),
+            'case' => null,
         ];
+
+        // Outer case: qty per case, gross weight and size from the master.
+        $perBuffer = static::positive($stock?->qty_per_buffer_box ?? null);
+        $buffersPerCase = static::positive($stock?->count ?? null);
+        $perCase = static::positive($stock?->total_qty_per_case ?? null)
+            ?? ($perBuffer && $buffersPerCase ? $perBuffer * $buffersPerCase : null);
+
+        $caseGrams = static::grams($stock?->weight_case ?? null);
+        if ($caseGrams === null && $buffersPerCase) {
+            $bufferGrams = static::grams($stock?->weight_buffer_box ?? null)
+                ?? ($perBuffer && $pieceGrams ? $perBuffer * $pieceGrams : null);
+            $caseGrams = $bufferGrams ? $buffersPerCase * $bufferGrams : null;
+        }
+
+        [$caseL, $caseW, $caseH] = static::dims($stock?->case_length ?? null, $stock?->case_width ?? null, $stock?->case_height ?? null);
+
+        if ($perCase && $perCase > 1 && $caseGrams && $caseL) {
+            $line['case'] = [
+                'per_case' => (int) round($perCase),
+                'weight' => $caseGrams / 1000,
+                'length' => $caseL,
+                'width' => $caseW,
+                'height' => $caseH,
+            ];
+        }
+
+        return $line;
     }
 
     /**
-     * @param  array<int, array{weight: float, length: ?float, width: ?float, height: ?float, quantity: int}>  $lines
+     * @param  array<int, array>  $lines  from line()
      */
     public static function fromLines(array $lines): array
     {
@@ -54,9 +109,28 @@ class ShipmentPackage
         $volume = 0.0;
         $maxLength = 0.0;
         $maxWidth = 0.0;
+        $cases = 0;
 
         foreach ($lines as $line) {
             $qty = max(1, (int) ($line['quantity'] ?? 1));
+            $case = $line['case'] ?? null;
+
+            $fullCases = 0;
+            if ($case && $case['per_case'] > 1 && $qty >= $case['per_case']) {
+                $fullCases = intdiv($qty, $case['per_case']);
+                $qty -= $fullCases * $case['per_case'];
+
+                $weight += $case['weight'] * $fullCases;
+                $volume += $case['length'] * $case['width'] * $case['height'] * $fullCases;
+                $maxLength = max($maxLength, $case['length']);
+                $maxWidth = max($maxWidth, $case['width']);
+                $cases += $fullCases;
+            }
+
+            if ($qty < 1) {
+                continue;
+            }
+
             $weight += (float) ($line['weight'] ?? 0) * $qty;
 
             $l = (float) ($line['length'] ?? 0);
@@ -73,11 +147,11 @@ class ShipmentPackage
         $width = max(static::MIN_SIDE_CM, $maxWidth);
         $height = max(static::MIN_SIDE_CM, $volume > 0 ? ceil($volume / ($length * $width)) : 0);
 
-        return static::format($weight, $length, $width, $height);
+        return static::format($weight, $length, $width, $height) + ['full_cases' => $cases];
     }
 
     /**
-     * Package from known box dimensions (e.g. entered on the order).
+     * Package from known box dimensions (e.g. entered on the order). Weight in kg.
      */
     public static function format(float $weight, float $length, float $width, float $height): array
     {

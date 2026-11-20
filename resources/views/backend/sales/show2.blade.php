@@ -68,7 +68,8 @@
                         <button id="create-shipment-btn" class="btn btn-primary" type="button"
                             data-order="{{ encrypt($order->id) }}"
                             data-provider="{{ $order->shipping_by ?? '' }}"
-                            data-total="{{ (float) $order->grand_total }}">
+                            data-total="{{ (float) $order->grand_total }}"
+                            data-ewaybill="{{ $order->eway_bill_number ?? '' }}">
                             {{ translate('Create Shipment') }}
                         </button>
                     @endif
@@ -489,14 +490,14 @@
                 var button = $(this);
                 var provider = button.data('provider');
                 var total = parseFloat(button.data('total')) || 0;
-                var ewaybill = '';
+                var ewaybill = String(button.data('ewaybill') || '');
 
                 if (!provider || provider === 'N/A') {
                     AIZ.plugins.notify('danger', '{{ translate('No shipment provider configured for this order.') }}');
                     return;
                 }
 
-                if (String(provider).toLowerCase() === 'delhivery' && total > 50000) {
+                if (String(provider).toLowerCase() === 'delhivery' && total > 50000 && !ewaybill.trim()) {
                     ewaybill = prompt('{{ translate('Enter E-waybill number for this Delhivery shipment:') }}');
                     if (!ewaybill || !ewaybill.trim()) {
                         AIZ.plugins.notify('danger', '{{ translate('E-waybill number is required for Delhivery shipments above Rs.50,000.') }}');

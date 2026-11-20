@@ -69,6 +69,48 @@ class DelhiveryController extends Controller
         return rtrim($hosts['staging'] ?? 'https://staging-express.delhivery.com', '/');
     }
 
+    public function isSandbox(): bool
+    {
+        return str_contains($this->host(), 'staging');
+    }
+
+    /**
+     * Checks the token against the current environment without creating anything:
+     * a pincode lookup for the pickup pincode.
+     */
+    public function testConnection(): array
+    {
+        $env = $this->isSandbox() ? 'SANDBOX' : 'LIVE';
+
+        if (!$this->cfg('api_token')) {
+            return ['success' => false, 'environment' => $env, 'message' => 'DELHIVERY_API_TOKEN is empty in .env.'];
+        }
+
+        $pin = preg_replace('/\D+/', '', (string) ($this->cfg('origin_pincode') ?: $this->pickupCfg('pin_code') ?: '110001'));
+
+        try {
+            $response = $this->http()->timeout(15)->get($this->url('c/api/pin-codes/json/'), ['filter_codes' => $pin]);
+        } catch (\Throwable $e) {
+            return ['success' => false, 'environment' => $env, 'message' => 'Could not reach ' . $this->host() . ': ' . $e->getMessage()];
+        }
+
+        if ($response->status() === 401 || $response->status() === 403) {
+            return ['success' => false, 'environment' => $env, 'message' => 'Delhivery rejected the token (HTTP ' . $response->status() . '). Check that the token belongs to the ' . strtolower($env) . ' environment.'];
+        }
+        if (!$response->successful()) {
+            return ['success' => false, 'environment' => $env, 'message' => 'Delhivery answered HTTP ' . $response->status() . '.'];
+        }
+
+        $service = $this->parseServiceability($response->json() ?: []);
+        $pickupNote = $this->pickupCfg('name') ? '' : ' No active pickup location is set yet.';
+
+        return [
+            'success' => true,
+            'environment' => $env,
+            'message' => 'Connected. Pickup pincode ' . $pin . ' is ' . ($service['serviceable'] ? 'serviceable' : 'not serviceable') . '.' . $pickupNote,
+        ];
+    }
+
     protected function url(string $path): string
     {
         return $this->host() . '/' . ltrim($path, '/');
@@ -511,7 +553,8 @@ class DelhiveryController extends Controller
         $isBusiness = $this->isBusinessUser($order->user);
         $businessFields = $isBusiness ? $this->businessShipmentFields($order) : [];
         $shipmentOrderCode = $this->shipmentOrderCode($order);
-        $defaultHsnCode = $this->cleanValue($this->cfg('default_hsn_code'));
+        // Product HSN from the HSN master; the configured default only when no product has one.
+        $hsnCode = $this->primaryHsn($order) ?: $this->cleanValue($this->cfg('default_hsn_code'));
         $ewaybillNumber = $this->resolveEwaybillNumber($order, $extra);
 
         $shipment = array_merge([
@@ -533,7 +576,7 @@ class DelhiveryController extends Controller
             'shipment_height' => (float) ($package['box_height'] ?? 10),
             'shipment_length' => (float) ($package['box_length'] ?? 10),
             'products_desc' => $this->cleanValue($this->productsDescription($order)),
-            'hsn_code' => $defaultHsnCode,
+            'hsn_code' => $hsnCode,
             'shipping_mode' => $this->cleanValue($this->cfg('shipping_mode', 'Express')),
             'return_pin' => '',
             'return_city' => '',
@@ -760,6 +803,7 @@ class DelhiveryController extends Controller
             $extra['ewaybill'] ?? null,
             $extra['ewbn'] ?? null,
             $extra['eway_bill'] ?? null,
+            $order->eway_bill_number ?? null,
             $order->ewaybill ?? null,
             $order->ewbn ?? null,
             $order->eway_bill ?? null,
@@ -1092,7 +1136,7 @@ class DelhiveryController extends Controller
                 'shipping_method_id' => $method?->id,
                 'shipping_id' => $waybill,
                 'tracking_url' => $trackingUrl,
-                'shipping_type' => $extra['shipping_type'] ?? null,
+                'shipping_type' => 'Delhivery',
                 'raw_response' => json_encode($data),
                 'status' => $status,
             ]

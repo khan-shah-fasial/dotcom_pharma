@@ -20,7 +20,7 @@ class CourierShipmentController extends Controller
     {
         $this->middleware(['permission:view_order_details'])->only('label', 'track');
         $this->middleware(['permission:update_order_delivery_status'])->only('cancel');
-        $this->middleware(['permission:shipping_configuration'])->only('pickup');
+        $this->middleware(['permission:shipping_configuration'])->only('pickup', 'testConnection');
     }
 
     public function label(Order $order)
@@ -83,6 +83,23 @@ class CourierShipmentController extends Controller
         flash($result['message'] ?? '')->{empty($result['success']) ? 'error' : 'success'}();
 
         return back();
+    }
+
+    /**
+     * Checks a courier's keys against its current environment. Nothing is booked.
+     */
+    public function testConnection(string $provider)
+    {
+        $instance = $this->providerInstance($provider, 'testConnection');
+        if (!$instance) {
+            return response()->json(['success' => false, 'message' => translate('This courier has no connection test.')], 404);
+        }
+
+        try {
+            return response()->json($instance->testConnection());
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**

@@ -22,11 +22,11 @@
                 $field('bluedart_shipper_mobile', 'Shipper mobile'),
                 $field('bluedart_product_code', 'Product code', 'From your Blue Dart contract, e.g. D (Domestic Priority) or A (Apex).'),
                 $field('bluedart_sub_product_code', 'Prepaid sub product code', 'Usually P. COD orders always use C.'),
-                $field('bluedart_default_rate', 'Flat rate shown at checkout (Rs.)', 'Blue Dart has no rate API. Leave blank to show no price.', 'number'),
+                $field('bluedart_default_rate', 'Fallback flat rate (Rs.)', 'Used only when the rate card below has no price for a zone. Leave blank to hide Blue Dart instead.', 'number'),
             ],
         ],
         'dhl' => [
-            'title' => 'DHL Express',
+            'title' => 'DHL Express (international only)',
             'fields' => [
                 $field('dhl_origin_postal_code', 'Origin postal code'),
                 $field('dhl_origin_city', 'Origin city'),
@@ -34,6 +34,9 @@
                 $field('dhl_shipper_name', 'Shipper / company name'),
                 $field('dhl_shipper_phone', 'Shipper phone'),
                 $field('dhl_shipper_email', 'Shipper email', '', 'email'),
+                $field('dhl_shipper_gstin', 'Exporter GSTIN'),
+                $field('dhl_shipper_iec', 'Exporter IEC', 'Import Export Code. DHL needs it on every export shipment.'),
+                $field('dhl_incoterm', 'Incoterm', 'DAP (receiver pays duties) by default. DDP = you pay duties.'),
                 $field('dhl_default_product_code', 'Default product code', 'P = Express Worldwide (international).'),
                 $field('dhl_currency', 'Currency', 'Defaults to INR.'),
             ],
@@ -73,12 +76,44 @@
         <h5 class="mb-0 h6">{{ translate('Credentials and booking') }}</h5>
     </div>
     <div class="card-body">
-        <div class="d-flex flex-wrap mb-3" style="gap: 8px;">
-            @foreach (['delhivery' => 'Delhivery', 'bluedart' => 'Blue Dart', 'dhl' => 'DHL'] as $slug => $name)
-                <span class="badge badge-inline {{ $credentialStatus[$slug] ? 'badge-success' : 'badge-danger' }}">
-                    {{ $name }}: {{ $credentialStatus[$slug] ? translate('API credentials set') : translate('API credentials missing in .env') }}
-                </span>
-            @endforeach
+        <div class="table-responsive mb-3">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ translate('Courier') }}</th>
+                        <th>{{ translate('Environment') }}</th>
+                        <th>{{ translate('Keys in .env') }}</th>
+                        <th>{{ translate('Connection') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (['delhivery' => 'Delhivery', 'bluedart' => 'Blue Dart', 'dhl' => 'DHL Express'] as $slug => $name)
+                        @php $live = ($environments[$slug] ?? '') === 'LIVE'; @endphp
+                        <tr>
+                            <td class="align-middle fw-600">{{ $name }}</td>
+                            <td class="align-middle">
+                                <span class="badge badge-inline {{ $live ? 'badge-danger' : 'badge-warning' }}" title="{{ $live ? translate('Real shipments, real charges') : translate('Test environment, nothing is shipped') }}">
+                                    {{ $environments[$slug] ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge badge-inline {{ $credentialStatus[$slug] ? 'badge-success' : 'badge-secondary' }}">
+                                    {{ $credentialStatus[$slug] ? translate('Set') : translate('Missing') }}
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <button type="button" class="btn btn-xs btn-soft-primary courier-test-btn" data-url="{{ route('courier_shipment.test', $slug) }}">
+                                    {{ translate('Test connection') }}
+                                </button>
+                                <span class="courier-test-result fs-12 ml-2"></span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            <p class="text-muted fs-12 mt-2 mb-0">
+                {{ translate('Going live: put the live keys in .env, set DELHIVERY_ENV=production, BLUEDART_ENV=production or DHL_ENV=production, run php artisan config:clear, then click Test connection. Nothing is booked by the test.') }}
+            </p>
         </div>
 
         <form action="{{ route('business_settings.update') }}" method="POST">
@@ -226,4 +261,88 @@
         </div>
     </div>
 @endforeach
+
+@php
+    $rateCard = \App\Support\BluedartRateCard::fromSetting(get_setting('bluedart_rate_card'));
+    $cardValue = fn ($path, $default = '') => data_get($rateCard, $path, $default);
+@endphp
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0 h6">{{ translate('Blue Dart rate card') }}</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted fs-12">
+            {{ translate('Blue Dart has no price API, so checkout prices come from your contract rates. Weight is charged in 500 g steps on the higher of actual and volumetric weight. Zones are worked out from the pickup and delivery pincodes.') }}
+        </p>
+        <form action="{{ route('business_settings.update') }}" method="POST">
+            @csrf
+            <input type="hidden" name="types[]" value="bluedart_rate_card">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-3">
+                    <thead>
+                        <tr>
+                            <th>{{ translate('Zone') }}</th>
+                            <th>{{ translate('First 500 g (Rs.)') }}</th>
+                            <th>{{ translate('Each extra 500 g (Rs.)') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (\App\Support\BluedartRateCard::ZONES as $zone => $label)
+                            <tr>
+                                <td class="align-middle">{{ translate($label) }}</td>
+                                <td><input type="number" step="0.01" min="0" class="form-control form-control-sm" name="bluedart_rate_card[zones][{{ $zone }}][first]" value="{{ $cardValue("zones.$zone.first") }}"></td>
+                                <td><input type="number" step="0.01" min="0" class="form-control form-control-sm" name="bluedart_rate_card[zones][{{ $zone }}][additional]" value="{{ $cardValue("zones.$zone.additional") }}"></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-row">
+                <div class="col-md-3 form-group">
+                    <label class="fs-12">{{ translate('Fuel surcharge %') }}</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="bluedart_rate_card[fuel_pct]" value="{{ $cardValue('fuel_pct') }}">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label class="fs-12">{{ translate('COD fee, minimum (Rs.)') }}</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="bluedart_rate_card[cod_flat]" value="{{ $cardValue('cod_flat') }}">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label class="fs-12">{{ translate('COD fee, % of order value') }}</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="bluedart_rate_card[cod_pct]" value="{{ $cardValue('cod_pct') }}">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label class="fs-12">{{ translate('GST %') }}</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="bluedart_rate_card[gst_pct]" value="{{ $cardValue('gst_pct', 18) }}">
+                </div>
+            </div>
+            <div class="text-right">
+                <button type="submit" class="btn btn-sm btn-primary">{{ translate('Save rate card') }}</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@section('script')
+<script>
+    $(document).on('click', '.courier-test-btn', function () {
+        var button = $(this);
+        var result = button.siblings('.courier-test-result');
+        button.prop('disabled', true);
+        result.removeClass('text-success text-danger').addClass('text-muted').text('{{ translate('Checking...') }}');
+
+        $.post(button.data('url'), { _token: '{{ csrf_token() }}' })
+            .done(function (payload) {
+                result.removeClass('text-muted').addClass(payload && payload.success ? 'text-success' : 'text-danger')
+                    .text((payload && payload.message) || '{{ translate('No response') }}');
+            })
+            .fail(function (xhr) {
+                result.removeClass('text-muted').addClass('text-danger')
+                    .text((xhr.responseJSON && xhr.responseJSON.message) || '{{ translate('Request failed') }}');
+            })
+            .always(function () {
+                button.prop('disabled', false);
+            });
+    });
+</script>
 @endsection

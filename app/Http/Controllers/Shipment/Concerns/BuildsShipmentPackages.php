@@ -22,6 +22,8 @@ trait BuildsShipmentPackages
             return ShipmentPackage::format($orderWeight, $orderLength, $orderWidth, $orderHeight);
         }
 
+        $order->loadMissing('orderDetails.product.stocks.dimensionSheet');
+
         $lines = [];
         foreach ($order->orderDetails as $detail) {
             $product = $detail->product;
@@ -48,7 +50,7 @@ trait BuildsShipmentPackages
     protected function buildPackageFromCart(): array
     {
         $carts = auth()->check()
-            ? Cart::with('product.stocks')->where('user_id', auth()->id())->get()
+            ? Cart::with('product.stocks.dimensionSheet')->where('user_id', auth()->id())->get()
             : collect(session('cart', []));
 
         $lines = [];
@@ -121,11 +123,90 @@ trait BuildsShipmentPackages
                 'name' => $product ? $product->getTranslation('name') : 'Product',
                 'sku' => (string) ($product->sku ?? $detail->product_id),
                 'quantity' => (int) $detail->quantity,
-                'price' => (float) $detail->price,
+                // order_details.price is the line total (unit price x quantity)
+                'price' => (int) $detail->quantity > 0 ? round((float) $detail->price / (int) $detail->quantity, 3) : (float) $detail->price,
+                'line_total' => (float) $detail->price,
+                'hsn' => $this->productHsn($product),
             ];
         }
 
         return $items;
+    }
+
+    /**
+     * The product's HSN as chosen from the HSN master (digits only), or ''.
+     */
+    protected function productHsn($product): string
+    {
+        $hsn = preg_replace('/\D+/', '', (string) ($product->product_hsn ?? ''));
+
+        return strlen($hsn) >= 4 ? substr($hsn, 0, 8) : '';
+    }
+
+    /**
+     * HSN for couriers that take one code per shipment: the HSN of the
+     * highest-value line, else ''.
+     */
+    protected function primaryHsn(Order $order): string
+    {
+        return (string) collect($this->orderItems($order))
+            ->filter(fn ($item) => $item['hsn'] !== '')
+            ->sortByDesc(fn ($item) => $item['line_total'])
+            ->pluck('hsn')
+            ->first();
+    }
+
+    /**
+     * ISO 3166 alpha-2 code from a code, a countries.id or a country name ('' if unknown).
+     */
+    protected function countryIso($value): string
+    {
+        static $byName = null;
+        static $byId = null;
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/^[A-Za-z]{2}$/', $value)) {
+            return strtoupper($value);
+        }
+
+        if ($byName === null) {
+            try {
+                $rows = \Illuminate\Support\Facades\DB::table('countries')->get(['id', 'code', 'name']);
+            } catch (\Throwable $e) {
+                $rows = collect();
+            }
+            $byName = $rows->mapWithKeys(fn ($c) => [strtolower(trim($c->name)) => strtoupper((string) $c->code)])->all();
+            $byId = $rows->mapWithKeys(fn ($c) => [(string) $c->id => strtoupper((string) $c->code)])->all();
+        }
+
+        if (ctype_digit($value)) {
+            return $byId[$value] ?? '';
+        }
+
+        return $byName[strtolower($value)] ?? (strtolower($value) === 'india' ? 'IN' : '');
+    }
+
+    /**
+     * Goods value for declared value / COD fee: order total, or the cart at checkout.
+     */
+    protected function orderValue($orderOrRequest): float
+    {
+        if ($orderOrRequest instanceof Order) {
+            return (float) $orderOrRequest->grand_total;
+        }
+
+        try {
+            $carts = auth()->check()
+                ? Cart::where('user_id', auth()->id())->get()
+                : Cart::where('temp_user_id', session('temp_user_id'))->get();
+
+            return (float) $carts->sum(fn ($cart) => (float) $cart->price * (int) $cart->quantity);
+        } catch (\Throwable $e) {
+            return 0.0;
+        }
     }
 
     protected function isCodOrder(Order $order): bool

@@ -1022,5 +1022,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin', 'prevent-ba
         Route::post('/orders/{order}/shipment/track', 'track')->name('courier_shipment.track');
         Route::post('/orders/{order}/shipment/cancel', 'cancel')->name('courier_shipment.cancel');
         Route::post('/courier-pickup/{provider}', 'pickup')->name('courier_shipment.pickup');
+        Route::post('/courier-test/{provider}', 'testConnection')->name('courier_shipment.test');
     });
 });

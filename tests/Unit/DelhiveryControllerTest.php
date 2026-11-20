@@ -187,4 +187,20 @@ class DelhiveryControllerTest extends TestCase
             && $r['pickup_time'] === '14:00:00'
             && $r['expected_package_count'] === 3);
     }
+
+    public function test_connection_check_reports_environment_and_bad_token(): void
+    {
+        Http::fakeSequence('staging-express.delhivery.com/c/api/pin-codes/*')
+            ->push(['detail' => 'Invalid token'], 401)
+            ->push(['delivery_codes' => [['postal_code' => ['pre_paid' => 'Y', 'cod' => 'Y']]]]);
+
+        $bad = $this->controller(['origin_pincode' => '400070'])->testConnection();
+        $this->assertFalse($bad['success']);
+        $this->assertSame('SANDBOX', $bad['environment']);
+        $this->assertStringContainsString('rejected the token', $bad['message']);
+
+        $good = $this->controller(['origin_pincode' => '400070'])->testConnection();
+        $this->assertTrue($good['success']);
+        $this->assertStringContainsString('400070 is serviceable', $good['message']);
+    }
 }

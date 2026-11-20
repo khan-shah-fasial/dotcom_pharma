@@ -2,7 +2,14 @@
 
 return [
     'bluedart' => [
-        'api_base_url' => env('BLUEDART_API_BASE_URL', 'https://apigateway.bluedart.com'),
+        // sandbox | production. All calls use the same host. Going live = live keys + production.
+        // When unset, the host is taken from BLUEDART_API_BASE_URL.
+        'environment' => env('BLUEDART_ENV'),
+        'hosts' => [
+            'sandbox' => 'https://apigateway-sandbox.bluedart.com',
+            'production' => 'https://apigateway.bluedart.com',
+        ],
+        'api_base_url' => env('BLUEDART_API_BASE_URL'),
         'jwt_token' => env('BLUEDART_JWT_TOKEN'),
         'client_id' => env('BLUEDART_CLIENT_ID'),
         'client_secret' => env('BLUEDART_CLIENT_SECRET'),
@@ -21,7 +28,13 @@ return [
     ],
 
     'dhl' => [
-        'api_base_url' => env('DHL_API_BASE_URL', 'https://express.api.dhl.com/mydhlapi/test'),
+        // test | production. Going live = live keys + production. When unset, DHL_API_BASE_URL is used.
+        'environment' => env('DHL_ENV'),
+        'bases' => [
+            'test' => 'https://express.api.dhl.com/mydhlapi/test',
+            'production' => 'https://express.api.dhl.com/mydhlapi',
+        ],
+        'api_base_url' => env('DHL_API_BASE_URL'),
         'api_key' => env('DHL_API_KEY'),
         'api_secret' => env('DHL_API_SECRET'),
         'account_number' => env('DHL_ACCOUNT_NUMBER'),
