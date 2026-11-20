@@ -46,3 +46,6 @@ public/all
 
 # Backup of .env with live service keys
 .env.live-backup
+
+# Local Claude Code settings, screenshots and test accounts
+/.claude/
