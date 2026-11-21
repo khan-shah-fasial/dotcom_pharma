@@ -29,26 +29,26 @@
         </a>
         @if ($showProductDiscountBadge)
             <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color:#43a047;">
+                data-badge="product" style="background-color:#43a047;">
                 {{ translate('Product') }} {{ $productDiscountPercent }}% OFF
             </span>
         @endif
         @if ($showBatchDiscountBadge)
             <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color:#1e88e5; top:{{ $showProductDiscountBadge ? 24 : 0 }}px;">
+                data-badge="batch" style="background-color:#1e88e5; top:{{ $showProductDiscountBadge ? 24 : 0 }}px;">
                 {{ translate('Batch') }} {{ $batchDiscountPercent }}% OFF
             </span>
         @endif
         @if ($product->wholesale_product)
             <span class="absolute-top-left fs-11 text-white fw-700 px-2 lh-1-8 ml-1 mt-1"
-                style="background-color:#455a64; @if ($wholesaleBadgeTop !== null) top:{{ $wholesaleBadgeTop - 20 }}px; @endif">
+                data-badge="wholesale" style="background-color:#455a64; @if ($wholesaleBadgeTop !== null) top:{{ $wholesaleBadgeTop - 20 }}px; @endif">
                 {{ translate('Wholesale') }}
             </span>
         @endif
         @if ($product->auction_product == 0)
             <!-- wishlisht & compare icons -->
             <div class="absolute-top-right aiz-p-hov-icon">
-                <a href="javascript:void(0)" class="hov-svg-white" onclick="addToWishList({{ $product->id }})"
+                <a href="javascript:void(0)" class="hov-svg-white" onclick="addToWishList({{ $product->id }})" aria-label="{{ translate('Add to wishlist') }}"
                     data-toggle="tooltip" data-title="{{ translate('Add to wishlist') }}" data-placement="left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.4" viewBox="0 0 16 14.4">
                         <g id="_51a3dbe0e593ba390ac13cba118295e4" data-name="51a3dbe0e593ba390ac13cba118295e4"
@@ -123,7 +123,7 @@
                 @endif
                 <!-- price -->
                 <div class="">
-                    <span class="fw-700 text-primary">{{ format_price(home_discounted_base_price($product, false)) }}</span>
+                    <span class="fw-700 text-primary">@if (home_discounted_base_price($product, false) > 0){{ format_price(home_discounted_base_price($product, false)) }}@else<span class="price-on-request">{{ translate('Price on request') }}</span>@endif</span>
                 </div>
             @endif
             @if ($product->auction_product == 1)

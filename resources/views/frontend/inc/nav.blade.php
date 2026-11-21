@@ -546,14 +546,14 @@ body .translater_menu .select2-container {
                     <ul class="list-inline d-flex justify-content-lg-start mb-0 top_baar_icons">
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="tel:+918828111034" class=" text-secondary fs-12 py-2">
-                                <img class="w-100" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281
+                                <img class="w-100" alt="" src="{{ static_asset('assets/img/call1_icons.svg') }}" />+91 88281
                                 11034
                             </a>
                         </li>
 
                         <li class="list-inline-item d-lg-block d-none">
                             <a href="mailto:info@dotcompharmaindia.com" class=" text-secondary fs-12 py-2">
-                                <img class="w-100" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
+                                <img class="w-100" alt="" src="{{ static_asset('assets/img/helps_icons.svg') }}" />Need Help?
                             </a>
                         </li>
 
@@ -994,7 +994,7 @@ body .translater_menu .select2-container {
                                 <!-- Search Icon for small device -->
                                 <div class="ml-auto mr-0 search-toggle-side-nav-bar">
                                     <a class="p-0 d-block" href="javascript:void(0);" data-toggle="class-toggle"
-                                        data-target=".front-header-search">
+                                        data-target=".front-header-search" aria-label="{{ translate('Search') }}">
                                         <i class="las la-search la-flip-horizontal la-2x pt-1"
                                             style="color:#23780E;"></i>
                                     </a>
@@ -1034,7 +1034,7 @@ body .translater_menu .select2-container {
                                             <a class="dropdown-toggle no-arrow fs-12"
                                                 data-toggle="dropdown" href="javascript:void(0);" role="button"
                                                 aria-haspopup="false" aria-expanded="false"
-                                                onclick="nonLinkableNotificationRead()" style="color:#23780E;">
+                                                onclick="nonLinkableNotificationRead()" aria-label="{{ translate('Notifications') }}" style="color:#23780E;">
                                                 <span class="position-relative d-inline-block">
                                                     <i class="las la-bell la-2x" style="color:#23780E;"></i>
                                                     @if (Auth::check() && count($user->unreadNotifications) > 0)

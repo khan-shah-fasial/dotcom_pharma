@@ -21,7 +21,7 @@
         @php
             $creditBlocked = \App\Models\CreditUse::blocksPurchase(Auth::user());
         @endphp
-        <div class="bg-white border p-4 mb-4">
+        <div class="bg-white border p-3 p-md-4 mb-4 credit-summary-card">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <span class="fs-16 fw-700 text-dark">{{ translate('My Credit') }}</span>
                 @if ($creditBlocked)
@@ -29,17 +29,17 @@
                 @endif
             </div>
             <div class="row gutters-16">
-                <div class="col-4">
+                <div class="col-12 col-md-4 credit-stat">
                     <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Available Credit') }}</p>
-                    <span class="fs-18 fw-700 text-dark">{{ single_price(\App\Models\CreditUse::availableFor(Auth::user())) }}</span>
+                    <span class="fs-18 fw-700 text-dark text-nowrap">{{ single_price(\App\Models\CreditUse::availableFor(Auth::user())) }}</span>
                 </div>
-                <div class="col-4">
+                <div class="col-12 col-md-4 credit-stat">
                     <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Outstanding Credit') }}</p>
-                    <span class="fs-18 fw-700 {{ $creditBlocked ? 'text-danger' : 'text-dark' }}">{{ single_price(\App\Models\CreditUse::outstandingFor(Auth::user())) }}</span>
+                    <span class="fs-18 fw-700 text-nowrap {{ $creditBlocked ? 'text-danger' : 'text-dark' }}">{{ single_price(\App\Models\CreditUse::outstandingFor(Auth::user())) }}</span>
                 </div>
-                <div class="col-4">
+                <div class="col-12 col-md-4 credit-stat">
                     <p class="fs-13 fw-400 text-secondary mb-1">{{ translate('Top up balance') }}</p>
-                    <span class="fs-18 fw-700 text-dark">{{ single_price(\App\Models\CreditUse::prepaidFor(Auth::user())) }}</span>
+                    <span class="fs-18 fw-700 text-dark text-nowrap">{{ single_price(\App\Models\CreditUse::prepaidFor(Auth::user())) }}</span>
                 </div>
             </div>
             <a href="{{ route('customer.credit.index') }}" class="fs-12 text-reset d-inline-block mt-3">

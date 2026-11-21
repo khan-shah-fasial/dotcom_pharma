@@ -221,20 +221,23 @@
                     </div>
 
                     <div class="row align-items-center pt-3 mb-4">
-                        <!-- Return to shop -->
-                        <div class="col-6">
+                        <!-- Return to shop (below the button on phones) -->
+                        <div class="col-12 col-sm-6 order-2 order-sm-1 text-center text-sm-left">
                             <a href="{{ route('home') }}" class="btn btn-link fs-14 fw-700 px-0">
                                 <i class="las la-arrow-left fs-16"></i>
                                 {{ translate('Return to shop') }}
                             </a>
                         </div>
 
-                        <!-- Complete Order -->
-                        <div class="col-6 text-right">
+                        <!-- Complete Order (full width on phones) -->
+                        <div class="col-12 col-sm-6 order-1 order-sm-2 text-sm-right mb-2 mb-sm-0">
                             <button type="button" onclick="submitOrder(this)" id="submitOrderBtn"
-                                class="btn btn-primary fs-14 fw-700 rounded-0 px-4"
+                                class="btn btn-primary fs-14 fw-700 rounded-0 px-4 checkout-submit-btn"
                                 style="background: #2b56a1 !important;"
                                 @if (!empty($creditPurchaseBlocked)) disabled data-credit-blocked="1" @endif>{{ translate('Complete Order') }}</button>
+                            @if (!empty($creditPurchaseBlocked))
+                                <p class="fs-12 text-danger mt-2 mb-0">{{ $creditPurchaseMessage }}</p>
+                            @endif
                         </div>
                     </div>
                 </div>

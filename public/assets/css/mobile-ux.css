@@ -336,9 +336,147 @@ body.modal-open .mobile-checkout-bar {
     }
 }
 
+/* ============================================================
+   5. Bottom nav and account dashboard
+   ============================================================ */
+@media (max-width: 1199.98px) {
+    /* the row's negative gutter pushed the last item 5px off screen */
+    .aiz-mobile-bottom-nav > .row {
+        margin-left: 0;
+        margin-right: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .aiz-mobile-bottom-nav > .row > .col > a span.d-block {
+        font-size: 11px !important;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 767.98px) {
+    /* My Credit: one row per figure, label left and amount right */
+    .credit-summary-card .credit-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px dashed #e5e7eb;
+    }
+
+    .credit-summary-card .credit-stat:last-child {
+        border-bottom: 0;
+    }
+
+    .credit-summary-card .credit-stat p {
+        margin-bottom: 0 !important;
+    }
+}
+
+/* ============================================================
+   6. Product cards
+   ============================================================ */
+@media (max-width: 767.98px) {
+    /* Discount badges: small pills in the bottom-left corner instead of over the product */
+    .aiz-card-box [data-badge] {
+        top: auto !important;
+        right: auto !important;
+        left: 6px !important;
+        margin: 0 !important;
+        padding: 0 6px !important;
+        font-size: 10px !important;
+        line-height: 18px !important;
+        border-radius: 9px;
+        z-index: 1;
+    }
+
+    .aiz-card-box [data-badge="product"],
+    .aiz-card-box [data-badge="batch"] {
+        bottom: 6px;
+    }
+
+    .aiz-card-box [data-badge="product"] ~ [data-badge="batch"] {
+        bottom: 28px;
+    }
+
+    .aiz-card-box [data-badge="wholesale"] {
+        top: 6px !important;
+        bottom: auto;
+    }
+
+    /* Card buy icon: 40px tap target */
+    .cart-btn-gome-page > a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
+/* ============================================================
+   7. Carousel arrows (were about 20x23px)
+   ============================================================ */
+@media (max-width: 991.98px) {
+    a.slide-arrow {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        margin-left: 2px !important;
+        margin-right: 2px !important;
+        border: 1px solid #e5e7eb;
+        border-radius: 50%;
+        background: #fff;
+    }
+}
+
 /* Phones: drop the location / clock / exchange-rate strip (saves ~45px of header) */
 @media (max-width: 767.98px) {
     .top-navbar .frontend-header-live-info {
         display: none !important;
+    }
+}
+
+/* ============================================================
+   8. Product cards with no priced pack
+   ============================================================ */
+.price-on-request {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #6b7280;
+}
+
+/* ============================================================
+   9. Address form: Save stays visible while the form scrolls
+   ============================================================ */
+@media (max-width: 767.98px) {
+    .modal-body .address-save-row {
+        position: sticky;
+        bottom: -20px; /* flush with the modal-body bottom padding (20px 25px) */
+        z-index: 2;
+        margin: 0 -25px -20px;
+        padding: 12px 25px;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .modal-body .address-save-row .btn {
+        width: 100%;
+        min-height: 44px;
+    }
+}
+
+/* ============================================================
+   10. Checkout: Complete Order spans the width on phones
+   ============================================================ */
+@media (max-width: 575.98px) {
+    .checkout-submit-btn {
+        width: 100%;
+        min-height: 48px;
     }
 }

@@ -33,12 +33,12 @@
     }
 </style>
 
-    <div class="col-6 mb-4" id="shipping-root" data-order-id="{{ $order->id ?? '' }}">
+    <div class="col-12 col-md-6 mb-4" id="shipping-root" data-order-id="{{ $order->id ?? '' }}">
         <h3 class="fs-16 fw-700 text-dark">{{ translate('Select Shipping Type') }}</h3>
 
         {{-- main selector: Transport, Courier, or Local (Courier default) --}}
         <div class="row gutters-10 mb-3">
-            <div class="col-md-3 col-6">
+            <div class="col-md-4 col-6">
                 <label class="aiz-megabox d-block mb-2">
                     <input type="radio" name="shipping_method" value="transport">
                     <span class="d-flex align-items-center justify-content-between aiz-megabox-elem rounded-0 p-3">
@@ -46,7 +46,7 @@
                     </span>
                 </label>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-4 col-6">
                 <label class="aiz-megabox d-block mb-2">
                     <input type="radio" name="shipping_method" value="courier" checked>
                     <span class="d-flex align-items-center justify-content-between aiz-megabox-elem rounded-0 p-3">
@@ -54,7 +54,7 @@
                     </span>
                 </label>
             </div>
-            <div class="col-md-3 col-6">
+            <div class="col-md-4 col-6">
                 <label class="aiz-megabox d-block mb-2">
                     <input type="radio" name="shipping_method" value="local">
                     <span class="d-flex align-items-center justify-content-between aiz-megabox-elem rounded-0 p-3">

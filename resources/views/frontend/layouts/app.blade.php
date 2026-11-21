@@ -18,7 +18,7 @@
     <meta name="app-url" content="{{ getBaseURL() }}">
     <meta name="file-base-url" content="{{ getFileBaseURL() }}">
 
-    <title>@yield('meta_title', get_setting('website_name') . ' | ' . get_setting('site_motto'))</title>
+    <title>@yield('meta_title', trim(get_setting('website_name') . (filled(get_setting('site_motto')) ? ' | ' . get_setting('site_motto') : '')))</title>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,7 +76,7 @@
 
     <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}?v=1.3.9">
     <link rel="stylesheet" href="{{ static_asset('assets/css/responsive.css') }}">
-    <link rel="stylesheet" href="{{ static_asset('assets/css/mobile-ux.css') }}?v=1.0.0">
+    <link rel="stylesheet" href="{{ static_asset('assets/css/mobile-ux.css') }}?v=1.1.0">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -181,12 +181,14 @@
         .pac-container { z-index: 100000; }
 
         /* ---- Google Translate: prevent top banner/frame layout shift ---- */
-        /* iframe.goog-te-banner-frame,
-        .goog-te-banner-frame.skiptranslate { display: none !important; }
+        /* The site's own language picker switches language, so Google's
+           "Translated into ... / Show original" bar is redundant and covered the header. */
+        iframe.goog-te-banner-frame,
+        iframe.skiptranslate[id$=".container"] { display: none !important; }
         html { margin-top: 0 !important; }
         body { top: 0 !important; }
         #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
-        .goog-text-highlight { background-color: inherit !important; box-shadow: none !important; } */
+        .goog-text-highlight { background-color: inherit !important; box-shadow: none !important; }
 
         /* ---- Select2 in Bootstrap modal ---- */
         .select2-container--open { z-index: 1065 !important; }

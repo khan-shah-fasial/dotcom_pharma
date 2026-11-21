@@ -16,7 +16,7 @@
     <meta name="robots" content="index, follow">
     <meta name="description" content="@yield('meta_description', get_setting('meta_description'))" />
     <meta name="keywords" content="@yield('meta_keywords', get_setting('meta_keywords'))">
-    <title>@yield('meta_title', get_setting('website_name') . ' | ' . get_setting('site_motto'))</title>
+    <title>@yield('meta_title', trim(get_setting('website_name') . (filled(get_setting('site_motto')) ? ' | ' . get_setting('site_motto') : '')))</title>
 
     <!-- Favicon -->
     @php

@@ -45,7 +45,7 @@
                                         </div>
                                         <!-- Price -->
                                         <div class="fs-14 mt-3 text-center">
-                                            <span class="d-block {{ $todays_deal_banner_text_color }} fw-700">{{ format_price(home_discounted_base_price($product, false)) }}</span>
+                                            <span class="d-block {{ $todays_deal_banner_text_color }} fw-700">@if (home_discounted_base_price($product, false) > 0){{ format_price(home_discounted_base_price($product, false)) }}@else<span class="price-on-request">{{ translate('Price on request') }}</span>@endif</span>
                                             @if(home_base_price($product, false) != home_discounted_base_price($product, false))
                                                 <del class="d-block text-secondary fw-400">{{ format_price(home_base_price($product, false)) }}</del>
                                             @endif

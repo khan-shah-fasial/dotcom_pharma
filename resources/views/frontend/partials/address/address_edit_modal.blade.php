@@ -132,7 +132,7 @@
         </div>
 
         <!-- Save button -->
-        <div class="form-group text-right mt-2">
+        <div class="form-group text-right mt-2 address-save-row">
             <button type="submit" class="btn btn-primary rounded-0 w-150px">{{translate('Save')}}</button>
         </div>
     </div>

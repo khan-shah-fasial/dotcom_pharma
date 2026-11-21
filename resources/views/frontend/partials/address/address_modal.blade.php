@@ -120,7 +120,7 @@
                         </div>
 
                         <!-- Save button -->
-                        <div class="form-group text-right">
+                        <div class="form-group text-right address-save-row">
                             <button type="submit" class="btn btn-primary rounded-0 w-150px" style="background: #2b56a1 !important">{{translate('Save')}}</button>
                         </div>
                     </div>

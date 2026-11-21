@@ -15,8 +15,8 @@
                     </h3>
                     <!-- Links -->
                     <div class="d-flex">
-                        <a type="button" class="arrow-prev slide-arrow link-disable text-secondary mr-2" onclick="clickToSlide('slick-prev','section_last_viewed_products')"><i class="las la-angle-left fs-20 fw-600"></i></a>
-                        <a type="button" class="arrow-next slide-arrow text-secondary ml-2" onclick="clickToSlide('slick-next','section_last_viewed_products')"><i class="las la-angle-right fs-20 fw-600"></i></a>
+                        <a type="button" aria-label="{{ translate('Previous') }}" class="arrow-prev slide-arrow link-disable text-secondary mr-2" onclick="clickToSlide('slick-prev','section_last_viewed_products')"><i class="las la-angle-left fs-20 fw-600"></i></a>
+                        <a type="button" aria-label="{{ translate('Next') }}" class="arrow-next slide-arrow text-secondary ml-2" onclick="clickToSlide('slick-next','section_last_viewed_products')"><i class="las la-angle-right fs-20 fw-600"></i></a>
                     </div>
                 </div>
                 <!-- Product Section -->
@@ -186,27 +186,27 @@
                     <ul class="list-inline social colored mb-md-4 mb-0 pl-0 ml-0 social_media">
                          @if (!empty(get_setting('linkedin_link')))
                             <li class="list-inline-item ">
-                                <a href="{{ get_setting('linkedin_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" /></a>
+                                <a href="{{ get_setting('linkedin_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" alt="LinkedIn" /></a>
                             </li>
                         @endif
                          @if (!empty(get_setting('instagram_link')))
                             <li class="list-inline-item">
-                                <a href="{{ get_setting('instagram_link') }}" target="_blank"><img src="{{ static_asset('assets/img/instagram_icons.svg') }}" /></a>
+                                <a href="{{ get_setting('instagram_link') }}" target="_blank"><img alt="Instagram" src="{{ static_asset('assets/img/instagram_icons.svg') }}" /></a>
                             </li>
                         @endif
                            @if (!empty(get_setting('twitter_link')))
                             <li class="list-inline-item ">
-                                <a href="{{ get_setting('twitter_link') }}" target="_blank"><img src="{{ static_asset('assets/img/x_icons.svg') }}" /></a>
+                                <a href="{{ get_setting('twitter_link') }}" target="_blank"><img alt="X" src="{{ static_asset('assets/img/x_icons.svg') }}" /></a>
                             </li>
                         @endif
                         @if (!empty(get_setting('facebook_link')))
                             <li class="list-inline-item">
-                                <a href="{{ get_setting('facebook_link') }}" target="_blank"><img src="{{ static_asset('assets/img/facebook_icons.svg') }}" /></a>
+                                <a href="{{ get_setting('facebook_link') }}" target="_blank"><img alt="Facebook" src="{{ static_asset('assets/img/facebook_icons.svg') }}" /></a>
                             </li>
                         @endif
                         @if (!empty(get_setting('youtube_link')))
                             <li class="list-inline-item">
-                                <a href="{{ get_setting('youtube_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" /></a>
+                                <a href="{{ get_setting('youtube_link') }}" target="_blank"><img src="{{ static_asset('assets/img/linked_icons.svg') }}" alt="YouTube" /></a>
                             </li>
                         @endif
                        
@@ -284,15 +284,15 @@
                     <h4 class="fs-18 blue_light_clr text-uppercase fw-600 mb-md-3 mb-1">{{ translate('Contacts') }}</h4>
                     <ul class="list-unstyled mb-0">
                         <li class="mb-0">
-                             <img src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
+                             <img alt="" src="{{ static_asset('assets/img/envolope_icons.svg') }} "/>
                             <p  class="fs-md-14 black_light_clr">{{ get_setting('contact_address',null,App::getLocale()) }}</p>
                         </li>
                         <li class="mb-0">
-                             <img src="{{ static_asset('assets/img/call_icons.svg') }} "/>
+                             <img alt="" src="{{ static_asset('assets/img/call_icons.svg') }} "/>
                             <p  class="fs-md-14 black_light_clr">{{ get_setting('contact_phone') }}</p>
                         </li>
                         <li class="mb-0">
-                            <img src="{{ static_asset('assets/img/location_icons.svg') }} "/>
+                            <img alt="" src="{{ static_asset('assets/img/location_icons.svg') }} "/>
                             <p  class="mb-0">
                                 <a href="mailto:{{ get_setting('contact_email') }}" class="fs-md-14 black_light_clr hov-text-primary">{{ get_setting('contact_email')  }}</a>
                             </p>
@@ -653,7 +653,7 @@
 </footer>
 
 <!-- Mobile bottom nav -->
-<div class="aiz-mobile-bottom-nav d-xl-none fixed-bottom border-top border-sm-bottom border-sm-left border-sm-right mx-auto mb-sm-2" style="background-color: rgb(255 255 255 / 90%)!important;">
+<div class="aiz-mobile-bottom-nav d-xl-none fixed-bottom border-top border-sm-bottom border-sm-left border-sm-right mx-auto mb-sm-2" style="background-color: #fff !important;">
     <div class="row align-items-center gutters-5">
         <!-- Home -->
         <div class="col">
