@@ -33,7 +33,7 @@
                                             <!-- Name -->
                                             <div class="form-group">
                                                 <label for="name" class="fs-12 fw-700 text-soft-dark">{{  translate('Full Name') }}</label>
-                                                <input type="text" class="form-control rounded-0{{ $errors->has('name') ? ' is-invalid' : '' }}" value="{{ old('name') }}" placeholder="{{  translate('Full Name') }}" name="name" required>
+                                                <input type="text" class="form-control rounded-0{{ $errors->has('name') ? ' is-invalid' : '' }}" value="{{ old('name') }}" placeholder="{{  translate('Full Name') }}" name="name" id="name" autocomplete="name" required>
                                                 @if ($errors->has('name'))
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $errors->first('name') }}</strong>
@@ -44,15 +44,15 @@
                                             <!-- Email or Phone -->
                                             @if (addon_is_activated('otp_system'))
                                                 <div class="form-group phone-form-group mb-1">
-                                                    <label for="phone" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}</label>
-                                                    <input type="tel" id="phone-code" class="form-control rounded-0{{ $errors->has('phone') ? ' is-invalid' : '' }}" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off">
+                                                    <label for="phone-code" class="fs-12 fw-700 text-soft-dark">{{  translate('Phone') }}</label>
+                                                    <input type="tel" id="phone-code" class="form-control rounded-0{{ $errors->has('phone') ? ' is-invalid' : '' }}" value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="tel-national">
                                                 </div>
 
                                                 <input type="hidden" name="country_code" value="">
 
                                                 <div class="form-group email-form-group mb-1 d-none">
                                                     <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
-                                                    <input type="email" class="form-control rounded-0 {{ $errors->has('email') ? ' is-invalid' : '' }}" value="{{ old('email') }}" placeholder="{{  translate('Email') }}" name="email"  autocomplete="off">
+                                                    <input type="email" class="form-control rounded-0 {{ $errors->has('email') ? ' is-invalid' : '' }}" value="{{ old('email') }}" placeholder="{{  translate('Email') }}" name="email" id="email" autocomplete="email">
                                                     @if ($errors->has('email'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('email') }}</strong>
@@ -66,7 +66,7 @@
                                             @else
                                                 <div class="form-group">
                                                     <label for="email" class="fs-12 fw-700 text-soft-dark">{{  translate('Email') }}</label>
-                                                    <input type="email" class="form-control rounded-0{{ $errors->has('email') ? ' is-invalid' : '' }}" value="{{ old('email') }}" placeholder="{{  translate('Email') }}" name="email">
+                                                    <input type="email" class="form-control rounded-0{{ $errors->has('email') ? ' is-invalid' : '' }}" value="{{ old('email') }}" placeholder="{{  translate('Email') }}" name="email" id="email" autocomplete="email">
                                                     @if ($errors->has('email'))
                                                         <span class="invalid-feedback" role="alert">
                                                             <strong>{{ $errors->first('email') }}</strong>
@@ -79,11 +79,11 @@
                                             <div class="form-group mb-0">
                                                 <label for="password" class="fs-12 fw-700 text-soft-dark pt-3">{{  translate('Password') }}</label>
                                                 <div class="position-relative">
-                                                    <input type="password" class="form-control rounded-0{{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{  translate('Password') }}" name="password" required>
+                                                    <input type="password" class="form-control rounded-0{{ $errors->has('password') ? ' is-invalid' : '' }}" placeholder="{{  translate('Password') }}" name="password" id="password" autocomplete="new-password" minlength="6" required>
                                                     <i class="password-toggle las la-2x la-eye"></i>
                                                 </div>
-                                                <div class="text-right mt-1">
-                                                    <span class="fs-12 fw-400 text-gray-dark">{{ translate('Password must contain at least 6 digits') }}</span>
+                                                <div class="mt-1 mb-3">
+                                                    <span class="fs-12 fw-400 text-gray-dark">{{ translate('Password must be at least 6 characters') }}</span>
                                                 </div>
                                                 @if ($errors->has('password'))
                                                     <span class="invalid-feedback" role="alert">
@@ -96,7 +96,7 @@
                                             <div class="form-group">
                                                 <label for="password_confirmation" class="fs-12 fw-700 text-soft-dark">{{  translate('Confirm Password') }}</label>
                                                 <div class="position-relative">
-                                                    <input type="password" class="form-control rounded-0" placeholder="{{  translate('Confirm Password') }}" name="password_confirmation" required>
+                                                    <input type="password" class="form-control rounded-0" placeholder="{{  translate('Confirm Password') }}" name="password_confirmation" id="password_confirmation" autocomplete="new-password" required>
                                                     <i class="password-toggle las la-2x la-eye"></i>
                                                 </div>
                                             </div>

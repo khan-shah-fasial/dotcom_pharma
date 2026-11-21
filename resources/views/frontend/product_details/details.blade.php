@@ -470,7 +470,7 @@
             @endif
         @endauth
 
-        <div class="col-12 pl-0 mt-md-3 mt-2 pt-1 pt-md-0 pb-0">
+        <div class="col-12 pl-0 mt-md-3 mt-2 pt-1 pt-md-0 pb-0 js-price-row">
             <span class="text-secondary fs-14">
                 <span id="per-piece-price-product-details" class="per-piece-price-product-details-gst"></span>
                 <!-- <span id="per-piece-price-product-details" class="                    
@@ -488,7 +488,7 @@
             <span id="package-count-product-details" class="text-secondary fs-14 ">
                 {{ $detailedProduct->product_count ?? '-' }} / Count</span> --}}
         </div>
-        <div class="col-12 pl-0 d-flex mt-md-3">
+        <div class="col-12 pl-0 d-flex mt-md-3 js-price-row">
             <span class="fs-18 detail-gray-color">{{ translate('MRP') }}:</span>
             <span id="mrp-unit" class="fs-18 detail-gray-color"></span>
             <span class="px-2 fw-500 fs-14 text-dark">Inclusive of all taxes</span>
@@ -828,6 +828,11 @@
 
         <!-- Add to cart & Buy now Buttons -->
         <div class="mt-md-4 mt-2" id="product-buy-actions">
+            {{-- Shown instead of the buy buttons when the selected pack has no price (see script below) --}}
+            <p class="no-price-note mb-2">
+                <strong>{{ translate('Price on request') }}</strong>
+                <span class="d-block fs-13 text-secondary">{{ translate('Send us an enquiry and our team will share the price.') }}</span>
+            </p>
 
 @if ($detailedProduct->digital == 0)
                 @if (
@@ -946,6 +951,25 @@
                         update();
                     }).observe(actions);
                 }
+
+                // A pack with no price (₹0) can't be bought: hide the buy buttons and point to Product Enquiry.
+                // Done with a body class so it never fights the stock logic that toggles d-none on the same buttons.
+                function checkNoPrice() {
+                    var src = document.getElementById('per-piece-price-product-details') || document.getElementById('chosen_price');
+                    var raw = src ? src.textContent.replace(/[^0-9.]/g, '') : '';
+                    var noPrice = raw !== '' && parseFloat(raw) === 0;
+                    if (document.body.classList.contains('product-no-price') !== noPrice) {
+                        document.body.classList.toggle('product-no-price', noPrice);
+                    }
+                }
+                ['per-piece-price-product-details', 'chosen_price'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el && 'MutationObserver' in window) {
+                        new MutationObserver(function () { checkNoPrice(); update(); })
+                            .observe(el, { childList: true, characterData: true, subtree: true });
+                    }
+                });
+                checkNoPrice();
 
                 var priceEl = document.getElementById('chosen_price');
                 if (priceEl && 'MutationObserver' in window) {

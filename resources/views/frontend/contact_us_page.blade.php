@@ -1,6 +1,6 @@
 @extends('frontend.layouts.app')
 
-@section('meta_title'){{ $page->meta_title }}@stop
+@section('meta_title'){{ $page->meta_title ?: trim($page->getTranslation('title') . ' | ' . get_setting('website_name'), ' |') }}@stop
 
 @section('meta_description'){{ $page->meta_description }}@stop
 

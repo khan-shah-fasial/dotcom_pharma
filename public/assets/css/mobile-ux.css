@@ -480,3 +480,31 @@ body.modal-open .mobile-checkout-bar {
         min-height: 48px;
     }
 }
+
+/* ============================================================
+   11. Product page: pack with no price -> enquiry only
+   ============================================================ */
+.no-price-note {
+    display: none;
+}
+
+body.product-no-price .no-price-note {
+    display: block;
+}
+
+body.product-no-price .js-price-row,
+body.product-no-price #chosen_price_div,
+body.product-no-price #product-buy-actions .add-to-cart:not(.product-enquiry-btn),
+body.product-no-price #product-buy-actions .out-of-stock,
+body.product-no-price #product-buy-actions .notify-restock {
+    display: none !important;
+}
+
+/* ============================================================
+   12. Side menu: 44px rows (were 38px)
+   ============================================================ */
+.mobile-drawer .mobile-drawer__link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+}

@@ -202,7 +202,7 @@
 
                                 <div class="form-group phone-form-group">
                                     <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Mobile No *</label>
-                                    <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Mobile No" name="phone" autocomplete="off" 
+                                    <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Mobile No" name="phone" autocomplete="tel-national" 
                                     value="{{ $Phone_parts_number ?? '' }}" required>
                                 </div>
 
@@ -687,7 +687,7 @@
 
                             <div class="form-group phone-form-group">
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize">Primary Mobile *</label>
-                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
+                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="tel-national" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark text-capitalize primary-number-warning">(this number is user for your Login details)</label>
                             </div>
@@ -1231,7 +1231,7 @@
 
                             <div class="form-group phone-form-group">
                                 <label for="phone-code" class="fs-12 fw-700 text-soft-dark">Primary Mobile *</label>
-                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="off" 
+                                <input type="tel" id="phone_code" class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }} rounded-0" placeholder="Enter Phone No" name="phone" autocomplete="tel-national" 
                                 value="{{ $Phone_parts_number ?? '' }}" required>
                             </div>
 

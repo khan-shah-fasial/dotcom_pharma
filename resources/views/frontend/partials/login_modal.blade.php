@@ -18,7 +18,7 @@
                             <div class="form-group phone-form-group mb-1">
                                 <input type="tel" id="phone-code"
                                     class="form-control{{ $errors->has('phone') ? ' is-invalid' : '' }}"
-                                    value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="off">
+                                    value="{{ old('phone') }}" placeholder="" name="phone" autocomplete="tel">
                             </div>
                             <!-- Country Code -->
                             <input type="hidden" name="country_code" value="">
@@ -27,7 +27,7 @@
                                 <input type="email"
                                     class="form-control {{ $errors->has('email') ? ' is-invalid' : '' }}"
                                     value="{{ old('email') }}" placeholder="{{ translate('Email') }}" name="email"
-                                    id="email" autocomplete="off">
+                                    id="email" autocomplete="username">
                                 @if ($errors->has('email'))
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $errors->first('email') }}</strong>
@@ -45,7 +45,7 @@
                                 <input type="email"
                                     class="form-control{{ $errors->has('email') ? ' is-invalid' : '' }}"
                                     value="{{ old('email') }}" placeholder="{{ translate('Email') }}" name="email"
-                                    id="email" autocomplete="off">
+                                    id="email" autocomplete="username">
                                 @if ($errors->has('email'))
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $errors->first('email') }}</strong>
@@ -56,7 +56,7 @@
 
                         <!-- Password -->
                         <div class="form-group">
-                            <input type="password" name="password" class="form-control h-auto rounded-0 form-control-lg"
+                            <input type="password" name="password" autocomplete="current-password" class="form-control h-auto rounded-0 form-control-lg"
                                 placeholder="{{ translate('Password') }}">
                         </div>
 

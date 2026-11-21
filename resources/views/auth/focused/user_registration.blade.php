@@ -83,7 +83,7 @@
                                                 <i class="password-toggle las la-2x la-eye"></i>
                                             </div>
                                             <div class="text-right mt-1">
-                                                <span class="fs-12 fw-400 text-gray-dark">{{ translate('Password must contain at least 6 digits') }}</span>
+                                                <span class="fs-12 fw-400 text-gray-dark">{{ translate('Password must be at least 6 characters') }}</span>
                                             </div>
                                             @if ($errors->has('password'))
                                                 <span class="invalid-feedback" role="alert">

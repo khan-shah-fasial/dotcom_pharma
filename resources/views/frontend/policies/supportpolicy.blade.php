@@ -1,6 +1,6 @@
 @extends('frontend.layouts.app')
 
-@section('meta_title'){{ $page->meta_title }}@stop
+@section('meta_title'){{ $page->meta_title ?: trim(translate('About Us') . ' | ' . get_setting('website_name'), ' |') }}@stop
 
 @section('meta_description'){{ $page->meta_description }}@stop
 
@@ -54,7 +54,7 @@
        <div class="container">
          <div class="row align-items-center">
                <div class="col-md-6 mb-md-0 mb-4">
-                     <img class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
+                     <img alt="" class="w-100" src="{{ static_asset('assets/img/about_us_images.png') }}" />
                </div> 
                
                <div class="col-md-6">
@@ -87,7 +87,7 @@
             <div class="row">
                 <div class="col-md-3 col-6">
                     <div class="counter_boxex">
-                        <div class="counter_img"><img src="{{ static_asset('assets/img/total_sale.svg') }}" /></div>
+                        <div class="counter_img"><img alt="" src="{{ static_asset('assets/img/total_sale.svg') }}" /></div>
                         <div class="counter_content">
                             <div class="display_flexs"><div class="counter-value" data-count="10000">0</div><span>+</span></div>
                             <p>Happy Clients</p>
@@ -97,7 +97,7 @@
 
                 <div class="col-md-3 col-6">
                     <div class="counter_boxex">
-                        <div class="counter_img"><img src="{{ static_asset('assets/img/happy_clients.svg') }}" /></div>
+                        <div class="counter_img"><img alt="" src="{{ static_asset('assets/img/happy_clients.svg') }}" /></div>
                         <div class="counter_content">
                             <div class="display_flexs"><div class="counter-value" data-count="500">0</div><span>+</span></div>
                             <p>Veterinary Products</p>
@@ -107,7 +107,7 @@
 
                 <div class="col-md-3 col-6">
                     <div class="counter_boxex">
-                        <div class="counter_img"><img src="{{ static_asset('assets/img/team_work.svg') }}" /></div>
+                        <div class="counter_img"><img alt="" src="{{ static_asset('assets/img/team_work.svg') }}" /></div>
                         <div class="counter_content">
                              <div class="display_flexs"><div class="counter-value" data-count="25">0</div><span>+</span></div>
                             <p>Countries Served</p>
@@ -117,7 +117,7 @@
 
                 <div class="col-md-3 col-6">
                     <div class="counter_boxex">
-                        <div class="counter_img"><img  src="{{ static_asset('assets/img/win_awards.svg') }}" /></div>
+                        <div class="counter_img"><img alt="" src="{{ static_asset('assets/img/win_awards.svg') }}" /></div>
                         <div class="counter_content">
                             <div class="display_flexs"><div class="counter-value" data-count="20">0</div><span>+</span></div>
                             <p>Years - Experience</p>
@@ -141,7 +141,7 @@
             <div class="item">
                <div class="shadow-effect">
                   <div class="testimnl_box ">
-                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <img alt="" src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
                         <h6 class="mb-0 text-dark fs-18">Dr. Ananya Mehta</h6>
                         <p class="mb-0 pb-0 text-dark fw-300 fs-14">Veterinarian</p>
@@ -161,7 +161,7 @@
             <div class="item">
                <div class="shadow-effect">
                   <div class="testimnl_box">
-                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <img alt="" src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
                         <h6 class="mb-0 text-dark fs-18">Ramesh Patil</h6>
                         <p class="mb-0 pb-0 text-dark fw-300 fs-14">Livestock Farmer</p>
@@ -183,7 +183,7 @@
             <div class="item">
                <div class="shadow-effect">
                   <div class="testimnl_box">
-                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <img alt="" src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
                         <h6 class="mb-0 text-dark fs-18">Sneha Kapoor</h6>
                         <p class="mb-0 pb-0 text-dark fw-300 fs-14">Pet Owner</p>
@@ -205,7 +205,7 @@
           <div class="item">
                <div class="shadow-effect">
                   <div class="testimnl_box ">
-                     <img src="{{ static_asset('assets/img/testi_img.png') }}" />
+                     <img alt="" src="{{ static_asset('assets/img/testi_img.png') }}" />
                      <div class="text-left">
                         <h6 class="mb-0 text-dark fs-18">Dr. Ananya Mehta</h6>
                         <p class="mb-0 pb-0 text-dark fw-300 fs-14">Veterinarian</p>
@@ -230,7 +230,7 @@
 
     <section class="sale_section position-relative">
             <div class="image-wrapper">
-                <img class="w-100 mb-0" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
+                <img alt="" class="w-100 mb-0" src="{{ static_asset('assets/img/video_img_sec.webp') }}" />
                 <a href="#" class="btn" data-toggle="modal" data-target="#exampleModal">
                     <img src="{{ static_asset('assets/img/play_button_icon.webp') }}" class="pulse-button space_1 overlay-img" alt="Play button">
                 </a>
@@ -264,7 +264,7 @@
                     <div class="row">
                           <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
-                                   <img class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
+                                   <img alt="" class="" src="{{ static_asset('assets/img/free_delivery_icons.svg') }}" />
                                    <div class="">
                                       <h6 class="text-white mb-1 fw-500 mb-0">Free Delivery</h6>
                                       <p class="text-white mb-0 pb-0 fs-14 fw-400">Order Over 250.00</p>
@@ -274,7 +274,7 @@
 
                           <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
-                                   <img src="{{ static_asset('assets/img/refund_icons.svg') }}" />
+                                   <img alt="" src="{{ static_asset('assets/img/refund_icons.svg') }}" />
                                    <div class="">
                                        <h6 class="text-white mb-1 fw-500 mb-0">Get Refund</h6>
                                       <p class="text-white mb-0 pb-0 fs-14 fw-400">Within 30 Days Return</p>
@@ -284,7 +284,7 @@
 
                            <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
-                                   <img src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
+                                   <img alt="" src="{{ static_asset('assets/img/safe_payment_icons.svg') }}" />
                                    <div class="">
                                        <h6 class="text-white mb-1 fw-500 mb-0">Safe Payment</h6>
                                       <p class="text-white mb-0 pb-0 fs-14 fw-400">100% Secure Payment</p>
@@ -294,7 +294,7 @@
 
                             <div class="col-xl-3 col-md-6">
                               <div class="payment_boxs align-items-center gap-3">
-                                   <img src="{{ static_asset('assets/img/support_icons.svg') }}" />
+                                   <img alt="" src="{{ static_asset('assets/img/support_icons.svg') }}" />
                                    <div class="">
                                       <h6 class="text-white mb-1 fw-500 mb-0">24/7 Support</h6>
                                       <p class="text-white mb-0 pb-0 fs-14 fw-400">Feel Free To Call Us</p>

@@ -119,6 +119,8 @@ button.btn.btn-primary.btn-block.fw-700.fs-14.rounded-0
     <script>
         var AIZ = AIZ || {};
     </script>
+    <!-- Phone fixes shared with the storefront (16px fields so iOS does not zoom) -->
+    <link rel="stylesheet" href="{{ static_asset('assets/css/mobile-ux.css') }}?v=1.2.0">
 </head>
 <body>
 

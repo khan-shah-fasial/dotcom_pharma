@@ -21,7 +21,7 @@
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label fs-14 fs-14">{{ translate('Your Name') }}</label>
                     <div class="col-md-10">
-                        <input type="text" class="form-control rounded-0" placeholder="{{ translate('Your Name') }}" name="name" value="{{ Auth::user()->name }}">
+                        <input type="text" class="form-control rounded-0" placeholder="{{ translate('Your Name') }}" name="name" autocomplete="name" value="{{ Auth::user()->name }}">
                     </div>
                 </div>
                 <!-- Phone-->
@@ -45,7 +45,7 @@
                         <label>{{ translate('Phone')}}</label>
                     </div>
                     <div class="col-md-10">
-                        <input type="text" id="phone_code_edit" class="form-control mb-3 rounded-0" placeholder="{{ translate('Enter Phone Number')}}" value="{{ $Phone_parts_number ?? '' }}" name="phone" required>
+                        <input type="tel" id="phone_code_edit" autocomplete="tel-national" class="form-control mb-3 rounded-0" placeholder="{{ translate('Enter Phone Number')}}" value="{{ $Phone_parts_number ?? '' }}" name="phone" required>
 
                         <input type="hidden" name="phone_code" value="{{ isset($Phone_parts[0]) ? ltrim($Phone_parts[0], '+') : '' }}" id="phone_code_meta">
                     </div>
@@ -72,14 +72,14 @@
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label fs-14">{{ translate('Your Password') }}</label>
                     <div class="col-md-10">
-                        <input type="password" class="form-control rounded-0" placeholder="{{ translate('New Password') }}" name="new_password">
+                        <input type="password" class="form-control rounded-0" placeholder="{{ translate('New Password') }}" name="new_password" autocomplete="new-password">
                     </div>
                 </div>
                 <!-- Confirm Password-->
                 <div class="form-group row">
                     <label class="col-md-2 col-form-label fs-14">{{ translate('Confirm Password') }}</label>
                     <div class="col-md-10">
-                        <input type="password" class="form-control rounded-0" placeholder="{{ translate('Confirm Password') }}" name="confirm_password">
+                        <input type="password" class="form-control rounded-0" placeholder="{{ translate('Confirm Password') }}" name="confirm_password" autocomplete="new-password">
                     </div>
                 </div>
                 <!-- Submit Button-->
@@ -170,7 +170,7 @@
                   </div>
                   <div class="col-md-10">
                       <div class="input-group mb-3">
-                        <input type="email" class="form-control rounded-0" placeholder="{{ translate('Your Email')}}" name="email" value="{{ Auth::user()->email }}" />
+                        <input type="email" class="form-control rounded-0" placeholder="{{ translate('Your Email')}}" name="email" autocomplete="email" value="{{ Auth::user()->email }}" />
                         <div class="input-group-append">
                            <button type="button" class="btn btn-outline-secondary new-email-verification">
                                <span class="d-none loading">
