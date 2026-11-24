@@ -88,7 +88,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
                 'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -108,7 +108,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => '(' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . ')',
                 'gross_sql' => $bufferPerCaseGross,
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -128,7 +128,7 @@ class ProductDimensionsController extends Controller
                 'net_sql' => 'COALESCE(product_stock_dimensions.outer_net, (' . $buffersPerCase . ' * ' . $bufferQty . ' * ' . $pieceNet . '))',
                 'gross_sql' => 'COALESCE(product_stocks.weight_case, ' . $bufferPerCaseGross . ')',
                 'net_factors' => ['count', 'qty_per_buffer_box', 'weight'],
-                'gross_factors' => ['count', 'qty_per_buffer_box', 'weight'],
+                'gross_factors' => ['count', 'weight_buffer_box'],
                 'length' => 'case_length',
                 'width' => 'case_width',
                 'height' => 'case_height',
@@ -176,6 +176,17 @@ class ProductDimensionsController extends Controller
 
         if ($variant !== '') {
             $query->where('product_stocks.variant', 'like', '%' . $variant . '%');
+        }
+
+        // Hundreds of variants carry no real SKU (NULL, blank, "0", "-") and some
+        // SKUs sit on several variants. These filters let the team find them.
+        $skuIssue = (string) $request->get('sku_issue', '');
+        if ($skuIssue === 'missing') {
+            $query->where(function ($missingSku) {
+                $this->whereSkuMissing($missingSku, 'product_stocks.sku');
+            });
+        } elseif ($skuIssue === 'duplicate') {
+            $query->whereIn('product_stocks.sku', $this->duplicateSkuQuery());
         }
 
         if ($categoryId) {
@@ -247,6 +258,16 @@ class ProductDimensionsController extends Controller
             $this->overlaySatellite($stock);
         });
 
+        $pageSkus = $stocks->getCollection()
+            ->map(fn ($stock) => trim((string) $stock->sku))
+            ->reject(fn ($sku) => $this->isMissingSku($sku))
+            ->unique()
+            ->values()
+            ->all();
+        $duplicateSkus = $pageSkus === []
+            ? []
+            : array_flip($this->duplicateSkuQuery()->whereIn('product_stocks.sku', $pageSkus)->pluck('sku')->all());
+
         $filterValues = $request->except(['page']);
         $filtersApplied = collect($filterValues)->contains(function ($value, $key) {
             if (in_array($key, ['sort_by', 'sort_dir'], true)) {
@@ -269,6 +290,8 @@ class ProductDimensionsController extends Controller
             'variant' => $variant,
             'categoryId' => $categoryId,
             'brandId' => $brandId,
+            'skuIssue' => $skuIssue,
+            'duplicateSkus' => $duplicateSkus,
             'jsGroups' => $this->jsGroups($groups),
             'jsAutoEdits' => $this->jsAutoEdits(),
         ]);
@@ -347,6 +370,9 @@ class ProductDimensionsController extends Controller
             $rules[$field] = ['nullable', 'numeric', 'min:0'];
         }
 
+        // MOQ 0 would let a SKU be ordered in zero quantities; the input already says min 1.
+        $rules['min_qty'] = ['nullable', 'integer', 'min:1'];
+
         $validated = $request->validate($rules);
 
         $stock = ProductStock::query()
@@ -382,6 +408,33 @@ class ProductDimensionsController extends Controller
             'message' => translate('Dimensions saved'),
             'dims' => $dims,
         ]);
+    }
+
+    public const MISSING_SKU_VALUES = ['', '0', '-'];
+
+    public function isMissingSku($sku): bool
+    {
+        return in_array(trim((string) $sku), self::MISSING_SKU_VALUES, true);
+    }
+
+    protected function whereSkuMissing($query, string $column): void
+    {
+        $query->whereNull($column)
+            ->orWhereIn(\DB::raw('TRIM(' . $column . ')'), self::MISSING_SKU_VALUES);
+    }
+
+    // SKUs (other than the "missing" placeholders) used by more than one
+    // physical variant.
+    protected function duplicateSkuQuery()
+    {
+        return ProductStock::query()
+            ->join('products as dup_products', 'dup_products.id', '=', 'product_stocks.product_id')
+            ->where('dup_products.digital', 0)
+            ->whereNotNull('product_stocks.sku')
+            ->whereNotIn(\DB::raw('TRIM(product_stocks.sku)'), self::MISSING_SKU_VALUES)
+            ->groupBy('product_stocks.sku')
+            ->havingRaw('COUNT(*) > 1')
+            ->select('product_stocks.sku');
     }
 
     protected function sortableColumns(array $groups): array
@@ -467,6 +520,10 @@ class ProductDimensionsController extends Controller
                 'qtyField' => $group['qty_field'],
                 'qtyFixed' => $group['qty_fixed'],
                 'qtyMode' => $group['qty_mode'] ?? 'fill',
+                // The grid builds its save payload from these. Without them the
+                // net weights (weight, outer_net) were left out and saved as NULL.
+                'netField' => $group['net_field'] ?? null,
+                'netMode' => $group['net_mode'] ?? 'fill',
                 'grossField' => $group['gross_field'] ?? null,
                 'grossMode' => $group['gross_mode'] ?? 'fill',
                 'grossFactors' => $group['gross_factors'] ?? [],
@@ -727,6 +784,8 @@ class ProductDimensionsController extends Controller
             $displayVariant !== '' ? $displayVariant : null,
         ]);
 
-        return implode(' — ', $parts);
+        // Escaped so the file stays plain ASCII: a raw Windows-1252 dash here
+        // made json_encode fail and the Same As search return a 500.
+        return implode(" \u{2014} ", $parts);
     }
 }

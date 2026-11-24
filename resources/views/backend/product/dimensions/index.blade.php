@@ -112,7 +112,6 @@
             vertical-align: middle !important;
         }
         .dimensions-sheet th {
-            font-family: Georgia, serif;
             font-weight: 700;
             line-height: 1.15;
             text-align: center;
@@ -141,6 +140,12 @@
         .dimensions-sheet .cell-lines span {
             display: block;
             min-height: 16px;
+        }
+        .dimensions-sheet .cell-lines span.badge {
+            display: inline-block;
+            min-height: 0;
+            width: auto;
+            margin-left: 2px;
         }
         .dimensions-sheet .text-red {
             color: #ff0000;
@@ -174,13 +179,12 @@
             background: #fff;
             border: 1px solid #222;
             box-shadow: 0 8px 18px rgba(0,0,0,.12);
-            left: 0;
             max-height: 220px;
             overflow-y: auto;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            z-index: 30;
+            /* Fixed, placed by placeSameAsResults(): inside the scrolling
+               table an absolute list was clipped to the row height. */
+            position: fixed;
+            z-index: 1030;
         }
         .dimensions-sheet .same-as-option {
             cursor: pointer;
@@ -216,7 +220,7 @@
                         <span class="badge badge-soft-secondary ml-1">{{ $stocks->total() }}</span>
                     </h5>
                     @if($filtersApplied)
-                        <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                        <span class="badge badge-inline badge-info mt-2">{{ translate('Filters applied') }}</span>
                     @endif
                 </div>
                 <div class="d-flex flex-wrap align-items-center">
@@ -254,6 +258,14 @@
                                     <label class="form-label" for="sku">{{ translate('SKU') }}</label>
                                     <input type="text" class="form-control" id="sku" name="sku"
                                            value="{{ $sku }}" placeholder="{{ translate('Enter SKU') }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" for="sku_issue">{{ translate('SKU problem') }}</label>
+                                    <select class="form-control aiz-selectpicker" id="sku_issue" name="sku_issue">
+                                        <option value="">{{ translate('All') }}</option>
+                                        <option value="missing" @selected($skuIssue === 'missing')>{{ translate('No SKU (blank, 0 or -)') }}</option>
+                                        <option value="duplicate" @selected($skuIssue === 'duplicate')>{{ translate('Duplicate SKU') }}</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label" for="variant">{{ translate('Full Variant') }}</label>
@@ -396,10 +408,19 @@
                         @php
                             $product = $stock->product;
                             $variantLabel = trim((string) $stock->variant);
+                            $rowSku = trim((string) $stock->sku);
                         @endphp
                         <tr class="dimension-row" data-stock-id="{{ $stock->id }}">
                             <td class="cell-lines text-left">
-                                <span>{{ $stock->sku }}</span>
+                                @if(in_array($rowSku,\App\Http\Controllers\ProductDimensionsController::MISSING_SKU_VALUES, true))
+                                    <span><span class="badge badge-inline badge-soft-danger" title="{{ translate('Stored SKU') }}: {{ $stock->sku ?? 'NULL' }}">{{ translate('No SKU') }}</span></span>
+                                @else
+                                    <span>{{ $stock->sku }}
+                                        @if(isset($duplicateSkus[$stock->sku]))
+                                            <span class="badge badge-inline badge-soft-warning">{{ translate('Duplicate') }}</span>
+                                        @endif
+                                    </span>
+                                @endif
                                 <span class="text-red">{{ $product?->name }}</span>
                                 @if($stock->is_hidden)
                                     <span class="badge badge-inline badge-soft-secondary">{{ translate('Hidden') }}</span>
@@ -744,6 +765,30 @@
                 refreshCalculated($row);
             });
 
+            function placeSameAsResults($input, $results) {
+                const rect = $input[0].getBoundingClientRect();
+                const width = Math.min(Math.max(rect.width, 360), window.innerWidth - 16);
+                const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+                const below = window.innerHeight - rect.bottom - 8;
+                const css = { left: left + 'px', width: width + 'px', top: '', bottom: '' };
+                if (below < 160 && rect.top > below) {
+                    css.bottom = (window.innerHeight - rect.top + 2) + 'px';
+                } else {
+                    css.top = (rect.bottom + 2) + 'px';
+                }
+                $results.css(css);
+            }
+
+            // A fixed list would drift away from its input on scroll, so close it.
+            $(window).on('scroll resize', function () {
+                $('.same-as-results').attr('hidden', true);
+            });
+            document.addEventListener('scroll', function (event) {
+                if (event.target !== document && !$(event.target).closest('.same-as-results').length) {
+                    $('.same-as-results').attr('hidden', true);
+                }
+            }, true);
+
             let searchTimer = null;
             $(document).on('input', '.same-as-input', function () {
                 const $input = $(this);
@@ -763,6 +808,7 @@
                         const items = (response && response.results) ? response.results : [];
                         if (!items.length) {
                             $results.html('<div class="same-as-option text-muted">{{ translate('No matching SKUs') }}</div>').removeAttr('hidden');
+                            placeSameAsResults($input, $results);
                             return;
                         }
                         const html = items.map(function (item) {
@@ -771,6 +817,7 @@
                                 '</button>';
                         }).join('');
                         $results.html(html).removeAttr('hidden');
+                        placeSameAsResults($input, $results);
                         $results.find('.same-as-option').each(function (index) {
                             $(this).data('dims', items[index].dims);
                         });
