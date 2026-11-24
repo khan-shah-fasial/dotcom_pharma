@@ -18,7 +18,10 @@ class TaxMasterRequest extends FormRequest
     {
         $normalized = TaxMaster::normalize($this->all());
         if (!$this->route('id') && ($normalized['tax_code'] ?? '') === '') {
-            $normalized['tax_code'] = TaxMaster::taxCodeBase($normalized['purchase_tax'] ?? 0);
+            $normalized['tax_code'] = TaxMaster::defaultTaxCode(
+                (string) ($normalized['kind'] ?? ''),
+                $normalized['purchase_tax'] ?? 0
+            );
         }
 
         $this->merge($normalized);
@@ -78,7 +81,9 @@ class TaxMasterRequest extends FormRequest
                 if ($owned) {
                     $validator->errors()->add(
                         'hsn_code',
-                        translate('This HSN Code already belongs to Tax Code ') . $owned->tax_code . '.'
+                        // translate() keys ignore trailing spaces and the stored
+                        // text came back trimmed, so the space sits outside it.
+                        translate('This HSN Code already belongs to Tax Code') . ' ' . $owned->tax_code . '.'
                     );
                 }
             }

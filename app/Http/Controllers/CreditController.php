@@ -368,13 +368,30 @@ class CreditController extends Controller
             ->selectRaw($outstandingSql . ' AS outstanding_sum')
             ->selectRaw("CASE WHEN users.credit_status IN ('1', 'active') THEN GREATEST(COALESCE(users.credit_limit, 0) - " . $outstandingSql . ', 0) ELSE 0 END AS available_sum')
             ->where('user_type', 'customer')
-            ->whereNotNull('step')
-            ->where(function ($query) use ($prepaidReady) {
-                $query->where('credit_limit', '>', 0)
-                    ->orWhere('credit_days', '>', 0)
-                    ->orWhereIn('credit_status', ['1', 'active', 1]);
-                if ($prepaidReady) {
-                    $query->orWhere('credit_prepaid', '>', 0);
+            ->where(function ($query) use ($prepaidReady, $tableReady, $filters) {
+                $query->where(function ($account) use ($prepaidReady) {
+                    $account->whereNotNull('step')
+                        ->where(function ($facility) use ($prepaidReady) {
+                            $facility->where('credit_limit', '>', 0)
+                                ->orWhere('credit_days', '>', 0)
+                                ->orWhereIn('credit_status', ['1', 'active', 1]);
+                            if ($prepaidReady) {
+                                $facility->orWhere('credit_prepaid', '>', 0);
+                            }
+                        });
+                });
+                // Overdue / outstanding KPIs count reserved uses, including customers with no step or a closed facility.
+                if ($tableReady && in_array($filters['balance'], ['outstanding', 'overdue'], true)) {
+                    $query->orWhereExists(function ($sub) use ($filters) {
+                        $sub->select(DB::raw(1))
+                            ->from('credit_uses')
+                            ->whereColumn('credit_uses.user_id', 'users.id')
+                            ->where('credit_uses.status', CreditUse::STATUS_RESERVED);
+                        if ($filters['balance'] === 'overdue') {
+                            $sub->whereNotNull('credit_uses.due_on')
+                                ->whereDate('credit_uses.due_on', '<', now()->toDateString());
+                        }
+                    });
                 }
             });
 
@@ -437,12 +454,17 @@ class CreditController extends Controller
     {
         $query = CreditUse::query()->with(['user.details', 'order']);
 
-        if ($filters['use_status'] === 'overdue') {
+        $useStatus = $filters['use_status'];
+        if ($useStatus === '' && in_array($filters['balance'], ['overdue', 'outstanding'], true)) {
+            $useStatus = $filters['balance'] === 'overdue' ? 'overdue' : CreditUse::STATUS_RESERVED;
+        }
+
+        if ($useStatus === 'overdue') {
             $query->where('status', CreditUse::STATUS_RESERVED)
                 ->whereNotNull('due_on')
                 ->whereDate('due_on', '<', now()->toDateString());
-        } elseif ($filters['use_status'] !== '') {
-            $query->where('status', $filters['use_status']);
+        } elseif ($useStatus !== '') {
+            $query->where('status', $useStatus);
         }
 
         if ($kindReady && $filters['kind'] !== '') {

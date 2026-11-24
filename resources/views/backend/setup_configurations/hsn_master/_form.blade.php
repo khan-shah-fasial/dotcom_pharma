@@ -35,7 +35,7 @@
             <label class="col-md-3 col-from-label" for="hsn_code">{{ translate('HSN Code') }} *</label>
             <div class="col-md-9">
                 <input type="text" name="hsn_code" id="hsn_code" class="form-control @error('hsn_code') is-invalid @enderror" value="{{ $hsnCode }}" maxlength="50" required placeholder="{{ translate('HSN Code') }}">
-                <small class="text-muted">{{ translate('2 to 8 digits, or longer. Dots and spaces are ignored, so 3004.9099 is the same code as 30049099.') }}</small>
+                <small class="text-muted">{{ translate('2 to 50 digits. Dots and spaces are ignored, so 3004.9099 is the same code as 30049099.') }}</small>
             </div>
         </div>
 

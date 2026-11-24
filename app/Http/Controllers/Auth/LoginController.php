@@ -311,8 +311,19 @@ class LoginController extends Controller
      */
     protected function sendFailedLoginResponse(Request $request)
     {
-        flash(translate('Invalid login credentials'))->error();
-        return back();
+        $message = translate('Invalid login credentials');
+        $input = $request->except('password');
+
+        // The corner toast fades out in a few seconds and the typed email was
+        // lost, so a wrong login looked like nothing happened. Email forms
+        // show the error under the field; phone forms have no field slot.
+        if ($request->filled('phone')) {
+            flash($message)->error();
+
+            return back()->withInput($input);
+        }
+
+        return back()->withInput($input)->withErrors(['email' => $message]);
     }
 
     /**

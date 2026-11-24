@@ -22,7 +22,7 @@
             <h1 class="h3">{{ translate('HSN Master') }}</h1>
         </div>
         @can('add_hsn_master')
-            <div class="col-md-6 text-md-right">
+            <div class="col-md-6 text-md-right mt-2 mt-md-0">
                 <a href="{{ route('hsn_masters.create') }}" class="btn btn-circle btn-info">
                     <span>{{ translate('Add New HSN') }}</span>
                 </a>
@@ -38,25 +38,27 @@
 @endif
 
 <div class="card">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
-        <div class="mb-2">
+    <div class="card-header" style="display: block;">
+        <div class="d-flex flex-wrap justify-content-between align-items-center" style="gap: 8px;">
             <h5 class="mb-0 h6">{{ translate('HSN Master') }}</h5>
-            @if ($filtersApplied)
-                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
-            @endif
+            <div class="d-flex flex-wrap align-items-center" style="gap: 8px;">
+                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#hsnMasterFilterModal">
+                    {{ translate('Open Filters') }}
+                </button>
+                <a href="{{ route('hsn_masters.index') }}" class="btn btn-danger">
+                    {{ translate('Reset') }}
+                </a>
+            </div>
         </div>
-        <div class="d-flex flex-wrap align-items-center">
-            <button type="button" class="btn btn-outline-primary mr-2 mb-2" data-toggle="modal" data-target="#hsnMasterFilterModal">
-                {{ translate('Open Filters') }}
-            </button>
-            <a href="{{ route('hsn_masters.index') }}" class="btn btn-danger mb-2">
-                {{ translate('Reset') }}
-            </a>
-        </div>
+        @if ($filtersApplied)
+            <div class="mt-2">
+                <span class="badge badge-inline badge-info">{{ translate('Filters applied') }}</span>
+            </div>
+        @endif
     </div>
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered aiz-table mb-0">
+        <div class="table-responsive hm-listing-wrap">
+            <table class="table table-bordered aiz-table mb-0 hm-listing">
                 <thead>
                     <tr>
                         @include('backend.inc.sortable_th', ['column' => 'id', 'label' => translate('ID'), 'routeName' => 'hsn_masters.index', 'sortBy' => $sortBy, 'sortDir' => $sortDir])
@@ -122,6 +124,13 @@
         @endif
     </div>
 </div>
+
+<style>
+    .hm-listing-wrap { overflow-x: scroll; -webkit-overflow-scrolling: touch; }
+    .hm-listing { min-width: 760px; }
+    .hm-listing th { white-space: nowrap; vertical-align: bottom; font-size: 12px; }
+    .hm-listing td { vertical-align: top; font-size: 13px; }
+</style>
 
 @endsection
 

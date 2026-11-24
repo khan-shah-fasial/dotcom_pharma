@@ -98,8 +98,7 @@
                     <p class="mb-0">{{ translate('Credit will be switched off and the limit and days set to 0. Past credit records and any top up balance are kept. The customer is notified.') }}</p>
                 </div>
                 <div class="alert alert-warning mb-0 d-none js-credit-remove-blocked">
-                    {{ translate('This customer still owes') }} <span class="fw-600 js-credit-outstanding"></span>.
-                    {{ translate('It must be paid before the credit account can be removed. You can switch credit to Deactive instead.') }}
+                    <span class="js-credit-remove-blocked-msg"></span>
                 </div>
             </div>
             <div class="modal-footer">
@@ -170,7 +169,8 @@
             edit: @json(translate('Edit credit')),
             none: @json(translate('No customer found')),
             hasCredit: @json(translate('Has credit')),
-            pick: @json(translate('Choose a customer first.'))
+            pick: @json(translate('Choose a customer first.')),
+            owes: @json(translate('This customer still owes :amount. It must be paid before the credit account can be removed. You can switch credit to Deactive instead.'))
         };
         var searchTimer = null;
         var paidText = {
@@ -260,7 +260,13 @@
             items.forEach(function (item) {
                 var row = document.createElement('button');
                 row.type = 'button';
-                row.className = 'list-group-item list-group-item-action py-2';
+                row.className = 'list-group-item list-group-item-action py-2 js-credit-pick-customer';
+                row.setAttribute('data-id', item.id);
+                row.setAttribute('data-name', item.name || '');
+                row.setAttribute('data-status', item.status || 'deactive');
+                row.setAttribute('data-limit', item.limit != null ? item.limit : '');
+                row.setAttribute('data-days', item.days != null ? item.days : '');
+                row.setAttribute('data-has-credit', item.has_credit ? '1' : '0');
                 var name = document.createElement('div');
                 name.className = 'fw-600';
                 name.textContent = item.name;
@@ -269,17 +275,6 @@
                 meta.textContent = (item.contact || '') + (item.has_credit ? ' · ' + text.hasCredit : '');
                 row.appendChild(name);
                 row.appendChild(meta);
-                row.addEventListener('click', function () {
-                    var modal = accountModal();
-                    modal.querySelector('.js-credit-user-id').value = item.id;
-                    if (item.has_credit) {
-                        modal.querySelector('#credit_account_status').value = item.status;
-                        modal.querySelector('#credit_account_days').value = item.days;
-                        modal.querySelector('#credit_account_limit').value = item.limit;
-                    }
-                    box.innerHTML = '';
-                    showSelected(item.name, item.has_credit);
-                });
                 box.appendChild(row);
             });
         }
@@ -307,9 +302,13 @@
             }
         });
 
+        // Capture phase: aiz-core's body tooltip('hide') throws (jQuery UI vs Bootstrap) and
+        // stops the bubble before these buttons can open a modal.
         document.addEventListener('click', function (event) {
             var account = event.target.closest('.js-credit-account');
             if (account) {
+                event.preventDefault();
+                event.stopPropagation();
                 openAccount(account.dataset.mode || 'edit', {
                     userId: account.dataset.userId,
                     customer: account.dataset.customer,
@@ -320,7 +319,26 @@
                 return;
             }
 
+            var pick = event.target.closest('.js-credit-pick-customer');
+            if (pick) {
+                event.preventDefault();
+                event.stopPropagation();
+                var modal = accountModal();
+                var hasCredit = pick.getAttribute('data-has-credit') === '1';
+                modal.querySelector('.js-credit-user-id').value = pick.getAttribute('data-id') || '';
+                if (hasCredit) {
+                    modal.querySelector('#credit_account_status').value = pick.getAttribute('data-status') === 'deactive' ? 'deactive' : 'active';
+                    modal.querySelector('#credit_account_days').value = pick.getAttribute('data-days') || '';
+                    modal.querySelector('#credit_account_limit').value = pick.getAttribute('data-limit') || '';
+                }
+                modal.querySelector('.js-credit-customer-results').innerHTML = '';
+                showSelected(pick.getAttribute('data-name') || '', hasCredit);
+                return;
+            }
+
             if (event.target.closest('.js-credit-change-customer')) {
+                event.preventDefault();
+                event.stopPropagation();
                 accountModal().querySelector('.js-credit-user-id').value = '';
                 showSelected('', false);
                 accountModal().querySelector('.js-credit-customer-search').focus();
@@ -329,11 +347,14 @@
 
             var remove = event.target.closest('.js-credit-remove');
             if (remove) {
+                event.preventDefault();
+                event.stopPropagation();
                 var removeModal = document.getElementById('creditRemoveModal');
                 var owes = remove.dataset.owes === '1';
+                var outstanding = (remove.dataset.outstanding || '').trim();
                 removeModal.querySelector('form').setAttribute('action', remove.dataset.action);
                 removeModal.querySelector('.js-credit-customer').textContent = remove.dataset.customer || '';
-                removeModal.querySelector('.js-credit-outstanding').textContent = remove.dataset.outstanding || '';
+                removeModal.querySelector('.js-credit-remove-blocked-msg').textContent = text.owes.replace(':amount', outstanding || '—');
                 removeModal.querySelector('.js-credit-remove-ok').classList.toggle('d-none', owes);
                 removeModal.querySelector('.js-credit-remove-blocked').classList.toggle('d-none', !owes);
                 removeModal.querySelector('.js-credit-remove-submit').disabled = owes;
@@ -343,6 +364,8 @@
 
             var paid = event.target.closest('.js-credit-markpaid');
             if (paid) {
+                event.preventDefault();
+                event.stopPropagation();
                 var paidModal = document.getElementById('creditMarkPaidModal');
                 paidModal.querySelector('form').reset();
                 paidModal.querySelector('form').setAttribute('action', paid.dataset.action);
@@ -355,7 +378,7 @@
                 paidHint();
                 $(paidModal).modal('show');
             }
-        });
+        }, true);
 
         @if ($reopenAccountModal)
             // Saving failed: show the form again with what was typed and the errors.

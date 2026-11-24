@@ -247,8 +247,10 @@
         $('#hsn-chapter-results').attr('hidden', true).empty();
     }
 
+    // Only runs when an HSN is picked from the list on a new record. Typing a
+    // partial code, or editing a saved tax, must never change Tax Type / Tax %.
     function lookupTaxByHsn(code) {
-        if (!code) {
+        if (!code || $('#tax_code').data('ignore-id')) {
             return;
         }
         $.get('{{ route('tax_masters.by_hsn') }}', { hsn: code }).done(function (row) {
@@ -300,7 +302,6 @@
             return;
         }
         hsnTimer = setTimeout(function () {
-            lookupTaxByHsn(query);
             $.get('{{ route('tax_masters.hsn_search') }}', { q: query }).done(function (rows) {
                 renderHsnResults('#hsn-results', rows);
             });

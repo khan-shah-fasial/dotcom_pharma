@@ -331,6 +331,13 @@
     .tm-identity-grid th, .tm-rate-grid th { background: #f3f6f9; font-size: 12px; white-space: normal; }
     .tm-identity-grid td, .tm-rate-grid td { vertical-align: top; }
     .tm-identity-wrap.table-responsive { overflow: visible; }
+    /* Below desktop the grid is wider than the card. With overflow visible it
+       spilled over the card edge, so let it scroll and keep the HSN / Applied On
+       lists in the flow (an absolute list would be clipped by the scroll box). */
+    @media (max-width: 991.98px) {
+        .tm-identity-wrap.table-responsive { overflow-x: auto; }
+        .tm-identity-wrap .tm-hsn-results { position: static; margin-top: 2px; }
+    }
     .tm-multi-control {
         display: flex;
         flex-wrap: wrap;

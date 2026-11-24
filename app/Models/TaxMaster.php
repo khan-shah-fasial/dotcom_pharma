@@ -703,6 +703,20 @@ class TaxMaster extends Model
         return 'G' . str_replace('.', '-', self::formatRate($taxPercent));
     }
 
+    // Exempted and LUT are always 0%, so a rate-based code like "G0" says
+    // nothing about the kind. They get their own codes instead.
+    public static function defaultTaxCode($kind, $taxPercent): string
+    {
+        if ($kind === 'exempted') {
+            return 'EX';
+        }
+        if ($kind === 'lut') {
+            return 'LUT';
+        }
+
+        return self::taxCodeBase($taxPercent);
+    }
+
     public static function isTruthy($value): bool
     {
         return in_array($value, [true, 1, '1', 'yes', 'y', 'on'], true);
@@ -1098,7 +1112,7 @@ class TaxMaster extends Model
             return null;
         }
 
-        $base = self::taxCodeBase($target);
+        $base = self::defaultTaxCode($kind, $target);
         $canonical = $rows->first(function ($row) use ($base) {
             return strtoupper((string) $row->tax_code) === $base;
         });
@@ -1114,7 +1128,7 @@ class TaxMaster extends Model
             return (string) $existing->tax_code;
         }
 
-        return self::taxCodeBase($taxPercent);
+        return self::defaultTaxCode($kind, $taxPercent);
     }
 
     public static function searchHsnDirectory(string $query, int $limit = 15): array
