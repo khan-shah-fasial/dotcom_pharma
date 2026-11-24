@@ -765,6 +765,9 @@ class BatchMasterController extends Controller
             'product_id' => $request->input('product_id'),
             'product_stock_id' => $request->input('product_stock_id'),
             'is_non_batch' => $request->input('is_non_batch'),
+            // The screen's Status switch was never passed, so normalize()
+            // defaulted every new row to active.
+            'status' => $request->input('status', 1),
             'purchase_date' => $row['purchase_date'] ?? $request->input('purchase_date'),
             'drug_name' => $request->input('drug_name'),
             'marketed_by_id' => $request->input('marketed_by_id'),

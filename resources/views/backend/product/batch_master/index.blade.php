@@ -36,7 +36,7 @@
         <div class="mb-2">
             <h5 class="mb-0 h6">{{ translate('Batch / Lot Master') }}</h5>
             @if ($filtersApplied)
-                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                <span class="badge badge-inline badge-info mt-2">{{ translate('Filters applied') }}</span>
             @endif
         </div>
         <div class="d-flex flex-wrap align-items-center">

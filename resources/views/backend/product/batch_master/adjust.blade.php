@@ -37,7 +37,7 @@
             <h5 class="mb-0 h6">{{ translate('Batch Adjustment') }}</h5>
             <p class="text-muted mb-0 fs-12">{{ translate('Convert creates a new batch id and leaves the old row in place. Destroy keeps the row and stores the reason and biowaste certificate.') }}</p>
             @if ($filtersApplied)
-                <span class="badge badge-info mt-2">{{ translate('Filters applied') }}</span>
+                <span class="badge badge-inline badge-info mt-2">{{ translate('Filters applied') }}</span>
             @endif
         </div>
         <div class="d-flex flex-wrap align-items-center">
@@ -176,6 +176,22 @@
         if (start !== null) {
             this.setSelectionRange(start, end);
         }
+    });
+    // The row inputs point at their form with form="bm-adjust-{id}", but
+    // FooTable leaves a hidden copy of the actions cell with the same form id.
+    // The inputs then belonged to the hidden copy, so Convert posted no batch
+    // code ("Please enter Batch Code."). Carry the row values into whichever
+    // form is actually submitted.
+    $(document).on('submit', 'form[id^="bm-adjust-"]', function () {
+        var form = this;
+        var $form = $(form);
+        $form.find('.bm-carried').remove();
+        $form.closest('tr').find('[form="' + form.id + '"]').each(function () {
+            if (!this.name || this.form === form) {
+                return;
+            }
+            $('<input type="hidden" class="bm-carried">').attr('name', this.name).val($(this).val()).appendTo($form);
+        });
     });
     $(document).on('click', '.bm-coa-zoom', function (e) {
         e.preventDefault();
