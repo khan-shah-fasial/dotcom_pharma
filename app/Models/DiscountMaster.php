@@ -3,9 +3,63 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DiscountMaster extends Model
 {
+    // discount_master_audits existed but nothing wrote to it, so edits and
+    // (hard) deletes of discounts left no trail.
+    protected static function booted(): void
+    {
+        static::created(function (self $discount) {
+            $discount->writeAudit(['action' => 'created', 'after' => $discount->auditSnapshot($discount->getAttributes())]);
+        });
+
+        static::updated(function (self $discount) {
+            $changed = array_diff_key($discount->getChanges(), array_flip(['updated_at']));
+            if ($changed === []) {
+                return;
+            }
+            $before = array_intersect_key($discount->getOriginal(), $changed);
+            $discount->writeAudit([
+                'action' => array_keys($changed) === ['status'] ? 'status' : 'updated',
+                'before' => $discount->auditSnapshot($before),
+                'after' => $discount->auditSnapshot($changed),
+            ]);
+        });
+
+        static::deleted(function (self $discount) {
+            $discount->writeAudit(['action' => 'deleted', 'before' => $discount->auditSnapshot($discount->getAttributes())]);
+        });
+    }
+
+    protected function auditSnapshot(array $values): array
+    {
+        // The sheet payload is large and repeats the other columns.
+        unset($values['sheet_payload']);
+
+        return $values;
+    }
+
+    protected function writeAudit(array $changes): void
+    {
+        try {
+            if (!Schema::hasTable('discount_master_audits')) {
+                return;
+            }
+            DB::table('discount_master_audits')->insert([
+                'discount_master_id' => $this->getKey(),
+                'user_id' => auth()->id(),
+                'changed_at' => now(),
+                'changes' => json_encode($changes, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
+            ]);
+        } catch (\Throwable $e) {
+            // An audit failure must never block saving a discount.
+            report($e);
+        }
+    }
+
     public const APPLIED_ON = [
         'sku' => 'SKU Product',
         'full_variant' => 'Full Variant',

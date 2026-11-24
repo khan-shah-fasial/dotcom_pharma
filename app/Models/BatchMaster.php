@@ -1068,9 +1068,20 @@ class BatchMaster extends Model
             'schemewise' => 'scheme_percent',
         ];
         foreach ($map as $type => $column) {
+            // Only discounts that are switched on and in date, as the product
+            // listing uses. A deactivated or expired discount was being copied
+            // into new lots.
+            $today = now()->toDateString();
             $row = DiscountMaster::query()
                 ->where('product_stock_id', $stock->id)
                 ->where('discount_type', $type)
+                ->where('status', 1)
+                ->where(function ($query) use ($today) {
+                    $query->whereNull('from_date')->orWhereDate('from_date', '<=', $today);
+                })
+                ->where(function ($query) use ($today) {
+                    $query->whereNull('to_date')->orWhereDate('to_date', '>=', $today);
+                })
                 ->orderByDesc('id')
                 ->first();
             if ($row && $row->{$column} !== null) {

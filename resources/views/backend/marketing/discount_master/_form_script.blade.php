@@ -405,7 +405,7 @@
     }
 
     function bindTypeahead($input) {
-        $input.on('keyup', function () {
+        $input.on('input', function () {
             var $el = $(this);
             var mode = $el.data('mode');
             var q = $.trim($el.val());

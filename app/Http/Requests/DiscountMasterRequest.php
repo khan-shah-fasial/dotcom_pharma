@@ -128,7 +128,11 @@ class DiscountMasterRequest extends FormRequest
             'effective_rate' => ['nullable', 'numeric', 'min:0'],
             'value_type' => ['nullable', Rule::in(['flat', 'percent'])],
             'value_amount' => ['nullable', 'numeric', 'min:0'],
-            'value_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // A flat discount also posts a derived percent. Capping that at 100
+            // gave a confusing "value percent" error for a flat entry, so the
+            // cap only applies when Percent is chosen (below), and the flat
+            // amount is checked against the rate in withValidator().
+            'value_percent' => ['nullable', 'numeric', 'min:0'],
             'earn' => ['nullable', 'numeric', 'min:0'],
             'invoice_amount' => ['nullable', 'numeric', 'min:0'],
             'scheme_free_qty' => ['nullable', 'numeric', 'min:0'],
@@ -190,6 +194,53 @@ class DiscountMasterRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $type = (string) $this->input('discount_type');
+            $flat = $this->input('value_type') !== 'percent';
+
+            if (in_array($type, ['productwise', 'batchwise'], true) && $flat) {
+                $slab = $this->input('roles.0.slabs.0', []);
+                $rate = $slab['rate'] ?? null;
+                $amount = $this->input('value_amount');
+                if (is_numeric($rate) && is_numeric($amount) && (float) $amount > (float) $rate) {
+                    $validator->errors()->add('value_amount', translate('Discount amount cannot be more than the rate') . ' (' . $amount . ' > ' . $rate . ').');
+                }
+            }
+
+            if (in_array($type, DiscountMaster::INVOICE_TYPES, true)) {
+                foreach ((array) $this->input('amounts', []) as $index => $row) {
+                    $from = $row['from'] ?? null;
+                    $to = $row['to'] ?? null;
+                    $line = $index + 1;
+                    if (is_numeric($from) && is_numeric($to) && (float) $from > (float) $to) {
+                        $validator->errors()->add('amounts.' . $index . '.from', translate('Amount slab') . ' ' . $line . ': ' . translate('"from" cannot be more than "To".'));
+                    }
+                    $amount = $row['amount'] ?? null;
+                    if ($type !== 'pointwise' && ($row['value_type'] ?? 'flat') !== 'percent'
+                        && is_numeric($amount) && is_numeric($to) && (float) $amount > (float) $to) {
+                        $validator->errors()->add('amounts.' . $index . '.amount', translate('Amount slab') . ' ' . $line . ': ' . translate('discount cannot be more than the slab amount.'));
+                    }
+                }
+            }
+
+            if ($type === 'couponwise') {
+                $code = trim((string) $this->input('coupon_code'));
+                if ($code !== '') {
+                    $taken = DiscountMaster::query()
+                        ->where('discount_type', 'couponwise')
+                        ->whereRaw('UPPER(TRIM(coupon_code)) = ?', [mb_strtoupper($code)])
+                        ->when($this->route('id'), fn ($query, $id) => $query->where('id', '!=', $id))
+                        ->value('discount_code');
+                    if ($taken) {
+                        $validator->errors()->add('coupon_code', translate('This coupon number is already used by') . ' ' . $taken . '.');
+                    }
+                }
+            }
+        });
     }
 
     private function netFromSlab(array $slab, bool $scheme): ?float
