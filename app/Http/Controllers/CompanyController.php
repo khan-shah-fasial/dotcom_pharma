@@ -179,6 +179,15 @@ class CompanyController extends Controller
 
     public function destroy(Company $company)
     {
+        // Products, brands and batch rows point at companies by id. Deleting a
+        // company still in use left those records pointing at nothing.
+        $inUse = $this->companyUsage($company);
+        if ($inUse !== []) {
+            flash(translate('This company is still in use and was not deleted') . ': ' . implode(', ', $inUse) . '.')->error();
+
+            return redirect()->route('companies.index');
+        }
+
         DB::transaction(function () use ($company) {
             $company->categories()->detach();
             if (CompanyFile::tableReady()) {
@@ -193,6 +202,40 @@ class CompanyController extends Controller
         flash(translate('Company has been deleted successfully'))->success();
 
         return redirect()->route('companies.index');
+    }
+
+    private function companyUsage(Company $company): array
+    {
+        $id = (int) $company->id;
+        $checks = [
+            'products' => [translate('products'), fn ($query) => $query->where('marketed_by_id', $id)],
+            'brands' => [translate('brands'), fn ($query) => $query->where('company_id', $id)],
+            'batch_masters' => [translate('batch / lot rows'), function ($query) use ($id) {
+                $query->where(function ($inner) use ($id) {
+                    $inner->where('company_id', $id)->orWhere('marketed_by_id', $id);
+                    foreach (['import_by_ids', 'manufactured_by_ids'] as $column) {
+                        if (\Illuminate\Support\Facades\Schema::hasColumn('batch_masters', $column)) {
+                            $inner->orWhereRaw('FIND_IN_SET(?, REPLACE(REPLACE(REPLACE(' . $column . ", '[', ''), ']', ''), '\"', ''))", [$id]);
+                        }
+                    }
+                });
+            }],
+        ];
+
+        $usage = [];
+        foreach ($checks as $table => [$label, $scope]) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                continue;
+            }
+            $query = DB::table($table);
+            $scope($query);
+            $count = $query->count();
+            if ($count > 0) {
+                $usage[] = $count . ' ' . $label;
+            }
+        }
+
+        return $usage;
     }
 
     private function applyFilters(Builder $companies, array $filters): void

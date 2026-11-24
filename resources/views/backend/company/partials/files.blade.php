@@ -5,6 +5,9 @@
         'documents' => 'Important Documents',
     ];
 
+    // The create page has no $company; "use ($company)" on an undefined
+    // variable made Add Company fail with a 500.
+    $company = $company ?? null;
     $savedFileRows = function (string $relation) use ($company, $filesReady, $blankFileRow) {
         $oldRows = old($relation);
         if (is_array($oldRows)) {
