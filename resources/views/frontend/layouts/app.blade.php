@@ -74,7 +74,7 @@
 
     <link rel="stylesheet" href="{{ static_asset('assets/css/intlTelinput.css') }}" />
 
-    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}?v=1.3.9">
+    <link rel="stylesheet" href="{{ static_asset('assets/css/custom-style.css') }}?v=1.4.0">
     <link rel="stylesheet" href="{{ static_asset('assets/css/responsive.css') }}">
     <link rel="stylesheet" href="{{ static_asset('assets/css/mobile-ux.css') }}?v=1.2.0">
 

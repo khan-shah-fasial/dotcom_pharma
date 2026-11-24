@@ -2910,3 +2910,12 @@ body .b2b_buttons_green:hover {
     color: #1f2937;
     margin-bottom: 10px;
 }
+
+/* Desktop: 40px side spacing inside .container */
+@media (min-width: 992px) {
+    .container,
+    .container-xxl {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+}
