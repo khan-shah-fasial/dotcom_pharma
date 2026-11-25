@@ -137,6 +137,22 @@ class ContactClassificationController extends Controller
     protected function validatedData(Request $request, ?ContactClassification $classification = null): array
     {
         $kind = (string) $request->input('kind');
+
+        // Children only fit under one parent kind, and contacts store each item
+        // in the column for its kind. Changing the kind of an item in use left
+        // e.g. a work profile under a department.
+        if ($classification && $kind !== '' && $kind !== $classification->kind) {
+            $reason = null;
+            if ($classification->children()->exists()) {
+                $reason = translate('Type cannot be changed because child items exist.');
+            } elseif ($classification->isUsedOnContacts()) {
+                $reason = translate('Type cannot be changed because contacts are using this item.');
+            }
+            if ($reason) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['kind' => $reason]);
+            }
+        }
+
         $parentKind = array_key_exists($kind, ContactClassification::KINDS)
             ? ContactClassification::KINDS[$kind]
             : '__invalid__';
@@ -176,6 +192,9 @@ class ContactClassificationController extends Controller
                     ->ignore($classification?->id),
             ],
             'status' => 'required|in:0,1',
+        ], [
+            'parent_id.required' => translate('Please select a parent item.'),
+            'parent_id.exists' => translate('Please select an active parent item of the right type.'),
         ]);
 
         $data['name'] = trim($data['name']);
