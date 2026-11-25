@@ -138,14 +138,30 @@ class NoteTypeMasterController extends Controller
     {
         $name = trim((string) $request->input('name'));
         $slugInput = trim((string) $request->input('slug'));
+        // A slug typed by the user is only tidied, not given a _2 suffix: a taken
+        // slug used to be changed silently, so the unique rule never fired.
         $slug = $slugInput !== ''
-            ? NoteTypeMaster::makeSlug($slugInput, $ignoreId)
+            ? (\Illuminate\Support\Str::limit(\Illuminate\Support\Str::slug($slugInput, '_'), 50, '') ?: 'type')
             : NoteTypeMaster::makeSlug($name, $ignoreId);
 
         $request->merge(['name' => $name, 'slug' => $slug]);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
+            // Two types with the same name showed twice in the notes dropdown.
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                function ($attribute, $value, $fail) use ($ignoreId) {
+                    $taken = NoteTypeMaster::query()
+                        ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                        ->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim((string) $value))])
+                        ->exists();
+                    if ($taken) {
+                        $fail(translate('A note type with this name already exists.'));
+                    }
+                },
+            ],
             'slug' => [
                 'required',
                 'string',
@@ -156,6 +172,7 @@ class NoteTypeMasterController extends Controller
             'status' => ['nullable', 'boolean'],
         ], [
             'slug.regex' => translate('Slug may only contain lowercase letters, numbers and underscores.'),
+            'slug.unique' => translate('This slug is already used by another note type.'),
         ]);
 
         $validated['status'] = $request->has('status') ? 1 : 0;
