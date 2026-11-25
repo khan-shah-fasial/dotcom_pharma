@@ -144,6 +144,9 @@ class LeadDepartmentController extends Controller
                     ->ignore($department?->id),
             ],
             'status' => 'required|in:0,1',
+        ], [
+            'category_id.required' => translate('Please select a category.'),
+            'category_id.exists' => translate('Please select a category.'),
         ]);
 
         $data['name'] = trim($data['name']);

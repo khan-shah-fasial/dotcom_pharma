@@ -73,18 +73,22 @@
                     <h5 class="mb-0 h6">{{ translate('Add Department Category') }}</h5>
                 </div>
                 <div class="card-body">
+                    {{-- Both forms on this page use "name" and "status". form_scope keeps an
+                         error and the typed value on the form that was actually submitted. --}}
+                    @php($catScope = old('form_scope') === 'category')
                     <form action="{{ route('lead-departments.categories.store') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="form_scope" value="category">
                         <div class="form-group">
                             <label>{{ translate('Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
-                            @error('name') <span class="text-danger small">{{ $message }}</span> @enderror
+                            <input type="text" name="name" class="form-control" value="{{ $catScope ? old('name') : '' }}" required>
+                            @if ($catScope) @error('name') <span class="text-danger small">{{ $message }}</span> @enderror @endif
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Status') }}</label>
                             <select name="status" class="form-control aiz-selectpicker">
                                 <option value="1">{{ translate('Active') }}</option>
-                                <option value="0" @selected(old('status') === '0')>{{ translate('Inactive') }}</option>
+                                <option value="0" @selected($catScope && old('status') === '0')>{{ translate('Inactive') }}</option>
                             </select>
                         </div>
                         <div class="text-right">
@@ -160,8 +164,10 @@
                     <h5 class="mb-0 h6">{{ translate('Add Department') }}</h5>
                 </div>
                 <div class="card-body">
+                    @php($deptScope = old('form_scope') === 'department')
                     <form action="{{ route('lead-departments.departments.store') }}" method="POST">
                         @csrf
+                        <input type="hidden" name="form_scope" value="department">
                         <div class="form-group">
                             <label>{{ translate('Category') }} <span class="text-danger">*</span></label>
                             <select name="category_id" class="form-control aiz-selectpicker" data-live-search="true" required>
@@ -174,14 +180,14 @@
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Name') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
-                            @error('name') <span class="text-danger small">{{ $message }}</span> @enderror
+                            <input type="text" name="name" class="form-control" value="{{ $deptScope ? old('name') : '' }}" required>
+                            @if ($deptScope) @error('name') <span class="text-danger small">{{ $message }}</span> @enderror @endif
                         </div>
                         <div class="form-group">
                             <label>{{ translate('Status') }}</label>
                             <select name="status" class="form-control aiz-selectpicker">
                                 <option value="1">{{ translate('Active') }}</option>
-                                <option value="0" @selected(old('status') === '0')>{{ translate('Inactive') }}</option>
+                                <option value="0" @selected($deptScope && old('status') === '0')>{{ translate('Inactive') }}</option>
                             </select>
                         </div>
                         <div class="text-right">
