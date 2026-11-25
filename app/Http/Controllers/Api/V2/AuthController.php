@@ -72,7 +72,7 @@ class AuthController extends Controller
         $user->email_verified_at = null;
         if ($user->email != null) {
             if (BusinessSetting::where('type', 'email_verification')->first()->value != 1) {
-                $user->email_verified_at = date('Y-m-d H:m:s');
+                $user->email_verified_at = date('Y-m-d H:i:s');
             }
         }
 
@@ -309,7 +309,7 @@ class AuthController extends Controller
                     $existing_or_new_user->name = $social_user_details->name;
                 }
                 $existing_or_new_user->email = $social_user_details->email;
-                $existing_or_new_user->email_verified_at = date('Y-m-d H:m:s');
+                $existing_or_new_user->email_verified_at = date('Y-m-d H:i:s');
             }
 
             $existing_or_new_user->save();
@@ -331,7 +331,7 @@ class AuthController extends Controller
         $user->email = $request->email;
         $user->phone = addon_is_activated('otp_system') ? $request->phone : null;
         $user->password = Hash::make($password);
-        $user->email_verified_at = $isEmailVerificationEnabled != 1 ? date('Y-m-d H:m:s') : null;
+        $user->email_verified_at = $isEmailVerificationEnabled != 1 ? date('Y-m-d H:i:s') : null;
         $user->save();
 
         // Account Opening and verification(if activated) eamil send

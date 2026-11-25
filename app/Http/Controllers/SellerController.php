@@ -136,7 +136,7 @@ class SellerController extends Controller
 
             // Verification email send
             if (get_setting('email_verification') != 1) {
-                $user->email_verified_at = date('Y-m-d H:m:s');
+                $user->email_verified_at = date('Y-m-d H:i:s');
                 $user->save();
             } else {
                 EmailUtility::email_verification($user, 'seller');

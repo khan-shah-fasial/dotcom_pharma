@@ -75,7 +75,7 @@ class ShopController extends Controller
 
             auth()->login($user, false);
             if (BusinessSetting::where('type', 'email_verification')->first()->value == 0) {
-                $user->email_verified_at = date('Y-m-d H:m:s');
+                $user->email_verified_at = date('Y-m-d H:i:s');
                 $user->save();
             } else {
                 try {

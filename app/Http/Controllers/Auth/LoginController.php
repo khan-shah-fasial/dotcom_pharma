@@ -96,7 +96,7 @@ class LoginController extends Controller
                     $existing_or_new_user->name = $user->name;
                 }
                 $existing_or_new_user->email = $user->email;
-                $existing_or_new_user->email_verified_at = date('Y-m-d H:m:s');
+                $existing_or_new_user->email_verified_at = date('Y-m-d H:i:s');
             }
             $existing_or_new_user->save();
 

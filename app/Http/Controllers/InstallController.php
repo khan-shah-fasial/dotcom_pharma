@@ -78,7 +78,7 @@ class InstallController extends Controller
         $user->email     = $request->admin_email;
         $user->password  = Hash::make($request->admin_password);
         $user->user_type = 'admin';
-        $user->email_verified_at = date('Y-m-d H:m:s');
+        $user->email_verified_at = date('Y-m-d H:i:s');
         $user->save();
 
         //Assign Super-Admin Role

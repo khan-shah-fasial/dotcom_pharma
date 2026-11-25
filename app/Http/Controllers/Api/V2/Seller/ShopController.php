@@ -224,7 +224,7 @@ class ShopController extends Controller
             $shop->save();
 
             if (BusinessSetting::where('type', 'email_verification')->first()->value != 1) {
-                $user->email_verified_at = date('Y-m-d H:m:s');
+                $user->email_verified_at = date('Y-m-d H:i:s');
                 $user->save();
             } else {
 
