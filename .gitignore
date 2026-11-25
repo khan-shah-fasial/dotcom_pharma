@@ -49,3 +49,6 @@ public/all
 
 # Local Claude Code settings, screenshots and test accounts
 /.claude/
+
+# Stray exports must never be web-reachable or committed
+/public/temp

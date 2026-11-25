@@ -31,10 +31,16 @@ class CustomerController extends Controller
     public function __construct() {
         // Staff Permission Check
         $this->middleware(['permission:view_all_customers'])->only('index');
-        $this->middleware(['permission:add_customer'])->only('create', 'createBusiness', 'storeBusiness');
+        // These had no permission check, so any staff login could open, edit
+        // or approve customer accounts. view_all_customers is what the Account
+        // Master menu already requires.
+        $this->middleware(['permission:view_all_customers'])->only([
+            'business_index', 'show', 'view', 'edit', 'update', 'approval', 'gstDetails',
+        ]);
+        $this->middleware(['permission:add_customer'])->only('create', 'createBusiness', 'storeBusiness', 'importTransportFromExcel');
         $this->middleware(['permission:login_as_customer'])->only('login');
         $this->middleware(['permission:ban_customer'])->only('ban', 'update_credit', 'remove_credit');
-        $this->middleware(['permission:delete_customer'])->only('destroy');
+        $this->middleware(['permission:delete_customer'])->only('destroy', 'bulk_customer_delete');
     }
 
     public function gstDetails(Request $request)
@@ -249,9 +255,11 @@ class CustomerController extends Controller
         // Text search
         if ($sort_search !== null) {
             $users->where(function ($q) use ($sort_search) {
-                $q->where('name', 'like', '%'.$sort_search.'%')
-                ->orWhere('email', 'like', '%'.$sort_search.'%')
-                ->orWhere('phone', 'like', '%'.$sort_search.'%');
+                // Qualified: the sort joins user_details, which also has "name",
+                // so an unqualified search crashed with "ambiguous column".
+                $q->where('users.name', 'like', '%'.$sort_search.'%')
+                ->orWhere('users.email', 'like', '%'.$sort_search.'%')
+                ->orWhere('users.phone', 'like', '%'.$sort_search.'%');
                 // ->orWhere('tel_number', 'like', '%'.$sort_search.'%');
             });
         }
@@ -272,11 +280,13 @@ class CustomerController extends Controller
         // IDs (GST/Aadhaar/PAN/Passport/IEC) filter
         if ($gst_no !== null) {
             $users->where(function ($q) use ($gst_no) {
-                $q->where('gst_no', 'like', '%'.$gst_no.'%')
-                ->orWhere('iec_no', 'like', '%'.$gst_no.'%')
-                ->orWhere('aadhaar_no', 'like', '%'.$gst_no.'%')
-                ->orWhere('pan_no', 'like', '%'.$gst_no.'%')
-                ->orWhere('passport_no', 'like', '%'.$gst_no.'%');
+                // users and user_details both carry these columns; unqualified
+                // they were ambiguous once the sort joined user_details.
+                $q->where('users.gst_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('users.iec_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('users.aadhaar_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('users.pan_no', 'like', '%'.$gst_no.'%')
+                ->orWhere('users.passport_no', 'like', '%'.$gst_no.'%');
             });
         }
 
@@ -712,7 +722,7 @@ class CustomerController extends Controller
 
             // Email Verification mail to Customer
             if(get_setting('email_verification') != 1){
-                $user->email_verified_at = date('Y-m-d H:m:s');
+                $user->email_verified_at = date('Y-m-d H:i:s');
                 $user->save();
                 offerUserWelcomeCoupon();
             }
@@ -889,6 +899,18 @@ class CustomerController extends Controller
             'dl2' => ['nullable', 'string', 'max:255'],
         ]);
 
+        // Messages used raw field names ("The prim email personal must be...").
+        $validator->setAttributeNames([
+            'crm_id' => translate('Account Number'),
+            'name_personal' => translate('Name'),
+            'phone_personal' => translate('Phone'),
+            'prim_email_personal' => translate('Email'),
+            'alt_email_personal' => translate('Alternate Email'),
+            'phone_business' => translate('Business Phone'),
+            'prim_email_business' => translate('Business Email'),
+            'alt_email_business' => translate('Business Alternate Email'),
+        ]);
+
         $validator->after(function ($validator) use ($request, $typeOption, $domesticChoice, $internationalChoice) {
             $personalEmail = trim((string) $request->input('prim_email_personal'));
             if ($personalEmail !== '' && User::where('email', $personalEmail)->exists()) {
@@ -984,7 +1006,7 @@ class CustomerController extends Controller
                 'type_option' => $typeOption,
                 'name' => $validated['name_personal'],
                 'email' => $validated['prim_email_personal'],
-                'email_verified_at' => date('Y-m-d H:m:s'),
+                'email_verified_at' => date('Y-m-d H:i:s'),
                 'phone' => '+' . $personalPrimaryCode . '-' . $validated['phone_personal'],
                 'password' => Hash::make($password),
                 'address' => implode(',', array_filter([
@@ -1172,7 +1194,7 @@ class CustomerController extends Controller
             //     return back()->withInput();
             // }
 
-            // $user->email_verified_at = date('Y-m-d H:m:s');
+            // $user->email_verified_at = date('Y-m-d H:i:s');
             // $user->save();
             // offerUserWelcomeCoupon();
 
@@ -1742,26 +1764,63 @@ class CustomerController extends Controller
      */
     public function destroy($id)
     {
-        $customer = User::findOrFail($id);
-        $customer->customer_products()->delete();
-        $customer->user_details()->delete();
-        $customer->addresses()->delete();
+        // Only customer accounts: this used to find any user, so an admin or
+        // staff id passed here was deleted too.
+        $customer = User::where('user_type', 'customer')->findOrFail($id);
 
-        User::destroy($id);
+        $blockers = $this->customerDeleteBlockers($customer);
+        if ($blockers !== []) {
+            flash(translate('This customer has') . ' ' . implode(', ', $blockers) . ' ' . translate('and was not deleted. Ban the account instead.'))->error();
+            return back();
+        }
+
+        $this->deleteCustomerRecords($customer);
         flash(translate('Customer has been deleted successfully'))->success();
         return redirect()->route('customers.index');
     }
 
     public function bulk_customer_delete(Request $request) {
         if($request->id) {
-            foreach ($request->id as $customer_id) {
-                $customer = User::findOrFail($customer_id);
-                $customer->customer_products()->delete();
-                $this->destroy($customer_id);
+            foreach ((array) $request->id as $customer_id) {
+                $customer = User::where('user_type', 'customer')->find($customer_id);
+                if ($customer && $this->customerDeleteBlockers($customer) === []) {
+                    $this->deleteCustomerRecords($customer);
+                }
             }
         }
 
         return 1;
+    }
+
+    // Orders, combined orders and credit payments point at the user id;
+    // deleting such a customer left them pointing at nothing.
+    private function customerDeleteBlockers(User $customer): array
+    {
+        $checks = [
+            'orders' => translate('orders'),
+            'combined_orders' => translate('combined orders'),
+            'credit_payments' => translate('credit payments'),
+        ];
+        $found = [];
+        foreach ($checks as $table => $label) {
+            if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                continue;
+            }
+            $count = DB::table($table)->where('user_id', $customer->id)->count();
+            if ($count > 0) {
+                $found[] = $count . ' ' . $label;
+            }
+        }
+
+        return $found;
+    }
+
+    private function deleteCustomerRecords(User $customer): void
+    {
+        $customer->customer_products()->delete();
+        $customer->user_details()->delete();
+        $customer->addresses()->delete();
+        $customer->delete();
     }
 
     public function login($id)
@@ -1973,7 +2032,9 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Invalid file type. Only .xlsx or .xls allowed.'], 422);
         }
 
-        $path = public_path($fileName);
+        // Import sheets hold customer drug licence numbers etc. They used to sit
+        // in public/, where anyone could download them without logging in.
+        $path = storage_path('app/imports/' . $fileName);
 
         if (!File::exists($path)) {
             // Log::error("File not found", ['path' => $path]);

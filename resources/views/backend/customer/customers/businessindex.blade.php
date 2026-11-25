@@ -709,11 +709,11 @@
 
                                                 <!-- Delete -->
                                                 @can('delete_customer')
-                                                    <a href="#" class="btn"
+                                                    <a href="#" class="btn confirm-delete"
                                                         data-href="{{ route('customers.destroy', $user->id) }}"
                                                         title="{{ translate('Delete') }}">
                                                         <i
-                                                            class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm confirm-delete mr-2"></i>
+                                                            class="las la-trash btn-soft-danger btn-icon btn-circle btn-sm mr-2"></i>
                                                         <span class="ms-1">{{ translate('Delete') }}</span>
                                                     </a>
                                                 @endcan
