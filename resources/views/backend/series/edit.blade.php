@@ -14,6 +14,8 @@
         <div class="card-body">
             <form action="{{ route('series.update', $seriesItem) }}" method="POST">
                 @csrf
+                {{-- The update route is PUT; without this every edit failed with a 405. --}}
+                @method('PUT')
                 @include('backend.series.form', ['seriesItem' => $seriesItem])
             </form>
         </div>

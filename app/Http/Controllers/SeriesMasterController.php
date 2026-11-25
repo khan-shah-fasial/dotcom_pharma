@@ -194,7 +194,53 @@ class SeriesMasterController extends Controller
             $rules['to_bill_no'] = ['nullable', 'string', 'max:50'];
         }
 
-        $data = $request->validate($rules);
+        $rules['code'][] = 'regex:/^[A-Za-z0-9\-]+$/';
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules, [
+            'code.regex' => translate('Code may use letters, numbers and hyphen only.'),
+        ]);
+        $validator->after(function ($validator) use ($request, $series) {
+            $others = SeriesMaster::query()->when($series, fn ($query) => $query->where('id', '!=', $series->id));
+
+            // Orders pick a series by name; a second series with the same
+            // name was silently ignored.
+            $name = mb_strtolower(trim((string) $request->input('name')));
+            if ($name !== '' && (clone $others)->whereRaw('LOWER(TRIM(name)) = ?', [$name])->exists()) {
+                $validator->errors()->add('name', translate('A series with this name already exists.'));
+            }
+
+            // Order numbers use the code with only letters/digits, cut to 5
+            // characters, so "UATSERIES1" became "UATSE" and "P-O" became
+            // "PO" (the same as Purchase Order).
+            $code = trim((string) $request->input('code'));
+            if ($code !== '' && preg_match('/^[A-Za-z0-9\-]+$/', $code)) {
+                $effective = SeriesMaster::normalizeCode($code);
+                $full = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $code));
+                if ($full !== $effective) {
+                    $validator->errors()->add('code', translate('Code can have at most 5 letters or numbers (orders would use') . ' ' . $effective . ').');
+                } else {
+                    foreach ((clone $others)->whereNotNull('code')->get(['name', 'code']) as $other) {
+                        if (SeriesMaster::normalizeCode($other->code) === $effective) {
+                            $validator->errors()->add('code', translate('Orders would use the same code as') . ' ' . $other->name . ' (' . $effective . ').');
+                            break;
+                        }
+                    }
+                }
+            }
+
+            $from = trim((string) $request->input('from_bill_no'));
+            $to = trim((string) $request->input('to_bill_no'));
+            if (ctype_digit($from) && ctype_digit($to)) {
+                if ((int) $from > (int) $to) {
+                    $validator->errors()->add('from_bill_no', translate('From Bill No. cannot be more than To Bill No.'));
+                } elseif ($request->filled('total_bills') && is_numeric($request->input('total_bills'))
+                    && (int) $request->input('total_bills') !== ((int) $to - (int) $from + 1)) {
+                    $validator->errors()->add('total_bills', translate('Total No of Bills should be') . ' ' . ((int) $to - (int) $from + 1) . ' ' . translate('for this bill range.'));
+                }
+            }
+        });
+
+        $data = $validator->validate();
         $data['status'] = $request->boolean('status') ? 1 : 0;
         $data['code'] = trim((string) ($data['code'] ?? '')) === '' ? null : trim((string) $data['code']);
 
