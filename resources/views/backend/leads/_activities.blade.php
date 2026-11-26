@@ -113,6 +113,9 @@
                                     @foreach ($activitySubStatuses as $subStatus)
                                         <option value="{{ $subStatus->id }}" @selected((string) $activity->sub_status_id === (string) $subStatus->id)>{{ $subStatus->title }}</option>
                                     @endforeach
+                                    @if ($activity->subStatus && !$activitySubStatuses->contains('id', $activity->sub_status_id))
+                                        <option value="{{ $activity->sub_status_id }}" selected>{{ $activity->subStatus->title }} ({{ translate('Inactive') }})</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="form-group">

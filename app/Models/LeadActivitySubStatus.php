@@ -20,6 +20,11 @@ class LeadActivitySubStatus extends Model
         return $this->hasMany(LeadActivity::class, 'sub_status_id');
     }
 
+    public function contactActivities()
+    {
+        return $this->hasMany(DirectoryContactActivity::class, 'sub_status_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 1);

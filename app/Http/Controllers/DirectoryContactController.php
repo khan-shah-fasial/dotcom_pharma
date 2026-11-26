@@ -434,7 +434,7 @@ class DirectoryContactController extends Controller
         abort_unless($this->activitiesEnabled(), 404);
         abort_unless((int) $directoryContactActivity->directory_contact_id === (int) $directoryContact->id, 404);
 
-        $data = $this->validatedActivityData($request, $directoryContactActivity->activity_type_id);
+        $data = $this->validatedActivityData($request, $directoryContactActivity->activity_type_id, $directoryContactActivity->sub_status_id);
         unset($data['attachments']);
         $attachments = $this->storeActivityAttachments($request);
 
@@ -796,7 +796,7 @@ class DirectoryContactController extends Controller
             ->get();
     }
 
-    protected function validatedActivityData(Request $request, ?int $currentTypeId = null): array
+    protected function validatedActivityData(Request $request, ?int $currentTypeId = null, ?int $currentSubStatusId = null): array
     {
         return $request->validate([
             'activity_type_id' => [
@@ -810,7 +810,10 @@ class DirectoryContactController extends Controller
             'sub_status_id' => [
                 'required',
                 'integer',
-                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where('status', 1)),
+                // An inactive sub status stays valid on the activity that already uses it.
+                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where(
+                    fn ($query) => $query->where('status', 1)->when($currentSubStatusId, fn ($query) => $query->orWhere('id', $currentSubStatusId))
+                )),
             ],
             'expected_value' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',

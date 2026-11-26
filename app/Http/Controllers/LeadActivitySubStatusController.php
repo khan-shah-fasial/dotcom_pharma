@@ -19,7 +19,7 @@ class LeadActivitySubStatusController extends Controller
 
     public function index()
     {
-        $subStatuses = LeadActivitySubStatus::withCount('activities')->orderBy('title')->get();
+        $subStatuses = LeadActivitySubStatus::withCount(['activities', 'contactActivities'])->orderBy('title')->get();
 
         return view('backend.leads.masters.activity_sub_statuses.index', compact('subStatuses'));
     }
@@ -49,7 +49,7 @@ class LeadActivitySubStatusController extends Controller
 
     public function destroy(LeadActivitySubStatus $subStatus)
     {
-        if ($subStatus->activities()->exists()) {
+        if ($subStatus->activities()->exists() || $subStatus->contactActivities()->exists()) {
             flash(translate('Activity sub status cannot be deleted because activities are using it'))->warning();
             return back();
         }

@@ -386,7 +386,7 @@ class LeadController extends Controller
         $this->authorizeLeadAccess($lead);
         abort_unless((int) $activity->lead_id === (int) $lead->id, 404);
 
-        $data = $this->validatedActivityData($request, $activity->activity_type_id);
+        $data = $this->validatedActivityData($request, $activity->activity_type_id, $activity->sub_status_id);
         $attachments = $this->storeActivityAttachments($request);
 
         if ($attachments) {
@@ -822,7 +822,7 @@ class LeadController extends Controller
         });
     }
 
-    protected function validatedActivityData(Request $request, ?int $currentTypeId = null): array
+    protected function validatedActivityData(Request $request, ?int $currentTypeId = null, ?int $currentSubStatusId = null): array
     {
         $data = $request->validate([
             'activity_type_id' => [
@@ -836,7 +836,10 @@ class LeadController extends Controller
             'sub_status_id' => [
                 'required',
                 'integer',
-                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where('status', 1)),
+                // An inactive sub status stays valid on the activity that already uses it.
+                Rule::exists('lead_activity_sub_statuses', 'id')->where(fn ($query) => $query->where(
+                    fn ($query) => $query->where('status', 1)->when($currentSubStatusId, fn ($query) => $query->orWhere('id', $currentSubStatusId))
+                )),
             ],
             'expected_value' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
