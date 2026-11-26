@@ -1754,7 +1754,10 @@ class OrderController extends Controller
         $transports = Transport::active()->orderBy('name')->get();
         $bookedToOptions = BookedTo::active()->orderBy('name')->get();
         $localDeliveryPartners = LocalDeliveryPartner::active()->orderBy('name')->get();
-        $seaPorts = SeaPort::where('status', 1)->orderBy('country')->orderBy('name')->get();
+        // Keep the order's own ports in the list even after they are deactivated.
+        $seaPorts = SeaPort::where('status', 1)
+            ->orWhereIn('id', array_filter([$order->loading_sea_port_id, $order->discharge_sea_port_id]))
+            ->orderBy('country')->orderBy('name')->get();
         $airports = Airport::where('status', 1)->orderBy('country')->orderBy('name')->get();
         extract($this->orderFormStaffOptions([
             'sales' => $order->sales_executive_id ?: $order->sales_person_id,
