@@ -434,7 +434,7 @@ class DirectoryContactController extends Controller
         abort_unless($this->activitiesEnabled(), 404);
         abort_unless((int) $directoryContactActivity->directory_contact_id === (int) $directoryContact->id, 404);
 
-        $data = $this->validatedActivityData($request);
+        $data = $this->validatedActivityData($request, $directoryContactActivity->activity_type_id);
         unset($data['attachments']);
         $attachments = $this->storeActivityAttachments($request);
 
@@ -796,13 +796,16 @@ class DirectoryContactController extends Controller
             ->get();
     }
 
-    protected function validatedActivityData(Request $request): array
+    protected function validatedActivityData(Request $request, ?int $currentTypeId = null): array
     {
         return $request->validate([
             'activity_type_id' => [
                 'required',
                 'integer',
-                Rule::exists('lead_activity_types', 'id')->where(fn ($query) => $query->where('status', 1)),
+                // An inactive type stays valid on the activity that already uses it.
+                Rule::exists('lead_activity_types', 'id')->where(fn ($query) => $query->where(
+                    fn ($query) => $query->where('status', 1)->when($currentTypeId, fn ($query) => $query->orWhere('id', $currentTypeId))
+                )),
             ],
             'sub_status_id' => [
                 'required',

@@ -19,7 +19,7 @@ class LeadActivityTypeController extends Controller
 
     public function index()
     {
-        $activityTypes = LeadActivityType::withCount('activities')->orderBy('title')->get();
+        $activityTypes = LeadActivityType::withCount(['activities', 'contactActivities'])->orderBy('title')->get();
 
         return view('backend.leads.masters.activity_types.index', compact('activityTypes'));
     }
@@ -49,7 +49,7 @@ class LeadActivityTypeController extends Controller
 
     public function destroy(LeadActivityType $activityType)
     {
-        if ($activityType->activities()->exists()) {
+        if ($activityType->activities()->exists() || $activityType->contactActivities()->exists()) {
             flash(translate('Activity type cannot be deleted because activities are using it'))->warning();
             return back();
         }

@@ -102,6 +102,9 @@
                                     @foreach ($activityTypes as $type)
                                         <option value="{{ $type->id }}" @selected((string) $activity->activity_type_id === (string) $type->id)>{{ $type->title }}</option>
                                     @endforeach
+                                    @if ($activity->activityType && !$activityTypes->contains('id', $activity->activity_type_id))
+                                        <option value="{{ $activity->activity_type_id }}" selected>{{ $activity->activityType->title }} ({{ translate('Inactive') }})</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="form-group">

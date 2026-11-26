@@ -28,7 +28,7 @@
                             <tr>
                                 <td>{{ $key + 1 }}</td>
                                 <td>{{ $activityType->title }}</td>
-                                <td>{{ $activityType->activities_count }}</td>
+                                <td>{{ $activityType->activities_count + $activityType->contact_activities_count }}</td>
                                 <td>
                                     @can('edit_lead')
                                         <label class="aiz-switch aiz-switch-success mb-0">

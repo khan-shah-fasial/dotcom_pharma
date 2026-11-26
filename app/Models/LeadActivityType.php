@@ -20,6 +20,11 @@ class LeadActivityType extends Model
         return $this->hasMany(LeadActivity::class, 'activity_type_id');
     }
 
+    public function contactActivities()
+    {
+        return $this->hasMany(DirectoryContactActivity::class, 'activity_type_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 1);
