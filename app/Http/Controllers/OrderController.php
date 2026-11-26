@@ -1758,7 +1758,9 @@ class OrderController extends Controller
         $seaPorts = SeaPort::where('status', 1)
             ->orWhereIn('id', array_filter([$order->loading_sea_port_id, $order->discharge_sea_port_id]))
             ->orderBy('country')->orderBy('name')->get();
-        $airports = Airport::where('status', 1)->orderBy('country')->orderBy('name')->get();
+        $airports = Airport::where('status', 1)
+            ->orWhereIn('id', array_filter([$order->loading_airport_id, $order->discharge_airport_id]))
+            ->orderBy('country')->orderBy('name')->get();
         extract($this->orderFormStaffOptions([
             'sales' => $order->sales_executive_id ?: $order->sales_person_id,
             'packed' => $order->packed_by,
